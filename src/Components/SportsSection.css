@@ -1,66 +1,74 @@
 .sports-section {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: flex-start;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1300px;
+  /* Extend max width */
   margin-top: 20px;
 }
+
 .sport-category {
   flex: 1;
-  text-align: center;
-  min-width: 200px;
-  max-width: 300px;
+  text-align: left;
+  min-width: 250px;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between; /* Ensures even spacing inside each section */
-  height: 100%; /* Forces each category to have the same height */
+  align-items: flex-start;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.sport-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  min-height: 50px;
+  /* Same height for all */
+}
 
-  
-  ol {
-    text-align: left;
-    padding-left: 20px;
-  }
-  
-  .cards {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 20px; /* Adds space between the list and buttons */
-  }
-  
-  
-  
-  .card {
-    padding: 10px;
-    background-color: #ddd;
-    border-radius: 5px;
-  }
+.sport-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
 
+ol,
+ul {
+  padding-left: 0;
+  margin: 0;
+  list-style-position: inside;
+}
 
-  .sport-category h2 {
-    margin-bottom: 10px; /* Ensures spacing consistency */
-  }
+li {
+  white-space: nowrap;
+  /* Force team/player names to stay on one line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+.teams-section {
+  margin-top: 15px;
+}
 
-  .sport-header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 50px; /* Forces all headers to have the same height */
-  }
-  
-  
-  .sport-logo {
-    width: 40px;
-    height: 40px;
-    object-fit: contain; /* Keeps original aspect ratio */
-  }
-  
-  
-  
-  
+.team-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.team-list img {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+ol {
+  min-height: 150px;
+  /* Ensures player list area is balanced */
+}
