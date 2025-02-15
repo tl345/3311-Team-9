@@ -1,0 +1,15 @@
+.team-page {
+    padding: 20px;
+}
+
+.team-page ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.team-page li {
+    margin: 5px 0;
+    background-color: #f4f4f4;
+    padding: 8px;
+    border-radius: 4px;
+}
