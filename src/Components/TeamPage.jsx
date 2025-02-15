@@ -45,12 +45,13 @@ function TeamPage() {
                                     <Link to={`/player/${player.id}`}>
                                         {player.name}
                                     </Link>
-                                    {` - ${player.position || 'N/A'} - `}
-                                    {player.number !== 'N/A' && player.number !== null ? `#${player.number}` : 'N/A'}
+                                    {` - ${player.position || 'N/A'} (${player.number !== 'N/A' && player.number !== null ? `#${player.number}` : 'N/A'})`}
+
                                     {player.goals !== undefined ? ` - Goals: ${player.goals}` : ''}
                                     {player.appearances !== undefined ? ` - Appearances: ${player.appearances}` : ''}
                                 </li>
                             ))}
+
                         </ul>
                     ) : (
                         <p>No players found.</p>
