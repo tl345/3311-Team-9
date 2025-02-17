@@ -44,8 +44,6 @@ function TeamPage() {
                             <Link to={`/player/${player.id}`} className="player-name">{player.name}</Link>
                             {" - "}
                             <span>{player.position || 'N/A'}</span>
-                            {" - #"}
-                            <span>{player.number !== "N/A" ? player.number : "N/A"}</span>
                             {" - Goals: "}
                             <span>{player.goals ?? 0}</span>
                             {" - Appearances: "}

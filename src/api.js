@@ -220,18 +220,25 @@ export const getPlayerDetails = async (playerId) => {
         return {
             id: playerData.id,
             name: playerData.name,
-            height: playerData.height,
-            weight: playerData.weight,
-            birth: playerData.birth.date,
             nationality: playerData.nationality,
             age: playerData.age,
-            yellowCards: stats.cards.yellow || 0,
-            redCards: stats.cards.red || 0,
-            assists: stats.goals.assists || 0,
-            pastClubs: [], // Not provided by this API
+            birth: playerData.birth,
+            height: playerData.height,
+            weight: playerData.weight,
+            appearances: stats.games.appearences ?? 'N/A',
+            goals: stats.goals.total ?? 0,
+            assists: stats.goals.assists ?? 0,
+            yellowCards: stats.cards.yellow ?? 0,
+            redCards: stats.cards.red ?? 0,
+            keyPasses: stats.passes.key ?? 0,
+            passAccuracy: stats.passes.accuracy ?? 'N/A',
+            penaltyGoals: stats.penalty.scored ?? 0,
+            tackles: stats.tackles.total ?? 0,
+            goalSaves: stats.goals.saves ?? 0,
         };
     } catch (error) {
         console.error(`Player Details Error (ID: ${playerId}):`, error);
         return null;
     }
 };
+
