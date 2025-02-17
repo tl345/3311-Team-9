@@ -4,6 +4,7 @@ import SportsSection from "./Components/SportsSection";
 import TeamPage from "./Components/TeamPage";
 import PlayerPage from "./Components/PlayerPage"; // Import PlayerPage
 import "./index.css";
+import StandingsPage from "./Components/StandingsPage";
 
 function App() {
     return (
@@ -18,6 +19,7 @@ function App() {
 
                 {/* Player Page: New route to show player stats */}
                 <Route path="/player/:id" element={<PlayerPage />} />
+                <Route path="/standings/:league" element={<StandingsPage />} />
             </Routes>
         </Router>
     );

@@ -47,20 +47,23 @@ export const getNbaTeams = async () => {
 export const getNbaPlayersByTeam = async (teamName) => {
     try {
         const res = await axios.get('https://www.balldontlie.io/api/v1/players', {
-            params: { search: teamName },
+            params: { search: teamName, per_page: 30 }, // Increase per_page
         });
 
         return res.data.data.map((player) => ({
             id: player.id,
             name: `${player.first_name} ${player.last_name}`,
-            position: player.position || 'N/A',
-            number: 'N/A', // BallDontLie doesn't provide jersey numbers
+            position: player.position || "N/A",
+            number: "N/A", // Jersey number not available in this API
+            appearances: "N/A",
+            goals: "N/A",
         }));
     } catch (error) {
         console.error(`NBA Team Players Error (${teamName}):`, error);
         return [];
     }
 };
+
 
 // ---------------- NFL (Mock Data) ---------------- //
 export const getNflPlayers = async () => {
