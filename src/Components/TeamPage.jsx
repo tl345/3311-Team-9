@@ -18,8 +18,8 @@ function TeamPage() {
                 } else if (sport === "Premier League") {
                     const eplPlayers = await getEplPlayersByTeam(teamName);
                     setPlayers(eplPlayers);
-                } else if (sport === "NFL") {
-                    setPlayers([]); // No detailed NFL data for now
+                } else {
+                    setPlayers([]);
                 }
             } catch (error) {
                 console.error(`Failed to fetch players for ${teamName}:`, error);
@@ -32,16 +32,6 @@ function TeamPage() {
 
     if (loading) return <p>Loading players...</p>;
 
-    if (sport === "NFL") {
-        return (
-            <div className="team-page">
-                <h1>{teamName} - {sport}</h1>
-                <p>Player data for NFL teams is not available yet.</p>
-                <Link to="/">← Back to Home</Link>
-            </div>
-        );
-    }
-
     return (
         <div className="team-page">
             <h1>{teamName} - {sport}</h1>
@@ -50,9 +40,16 @@ function TeamPage() {
             {players.length > 0 ? (
                 <ul>
                     {players.map((player) => (
-                        <li key={player.id}>
-                            <Link to={`/player/${player.id}`}>{player.name}</Link>
-                            {` - #${player.number || "N/A"} - ${player.position || "N/A"} - Appearances: ${player.appearances || 0} - Goals: ${player.goals || 0}`}
+                        <li key={player.id} className="player-item">
+                            <Link to={`/player/${player.id}`} className="player-name">{player.name}</Link>
+                            {" - "}
+                            <span>{player.position || 'N/A'}</span>
+                            {" - #"}
+                            <span>{player.number !== "N/A" ? player.number : "N/A"}</span>
+                            {" - Goals: "}
+                            <span>{player.goals ?? 0}</span>
+                            {" - Appearances: "}
+                            <span>{player.appearances !== "N/A" ? player.appearances : "N/A"}</span>
                         </li>
                     ))}
                 </ul>

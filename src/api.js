@@ -153,7 +153,9 @@ export const getEplTeams = async () => {
 export const getEplPlayersByTeam = async (teamName) => {
     try {
         const eplTeams = await getEplTeams();
-        const team = eplTeams.find((t) => t.name.toLowerCase().includes(teamName.toLowerCase()));
+        const team = eplTeams.find((t) =>
+            t.name.toLowerCase().includes(teamName.toLowerCase())
+        );
 
         if (!team) {
             console.error(`Team ${teamName} not found in EPL Teams`);
@@ -165,24 +167,26 @@ export const getEplPlayersByTeam = async (teamName) => {
         let totalPages = 1;
 
         while (currentPage <= totalPages) {
-            const res = await axios.get('https://v3.football.api-sports.io/players', {
-                headers: { 'x-apisports-key': EPL_API_KEY },
+            const res = await axios.get("https://v3.football.api-sports.io/players", {
+                headers: { "x-apisports-key": EPL_API_KEY },
                 params: { team: team.id, season: 2023, page: currentPage },
             });
 
             const playersOnPage = res.data.response.map((playerData) => {
-                // Try to find EPL (league.id === 39) stats specifically
                 const eplStat = playerData.statistics.find(
-                    (stat) => stat.league.id === 39
+                    (stat) => stat.league.id === 39 && stat.league.season === 2023
                 );
 
                 return {
                     id: playerData.player.id,
                     name: playerData.player.name,
-                    position: eplStat?.games.position || 'N/A',
-                    number: eplStat?.games.number || 'N/A',
-                    goals: eplStat?.goals.total || 0,
-                    appearances: eplStat?.games.appearances || 0,
+                    position: eplStat?.games.position || "N/A",
+                    number: eplStat?.games.number ?? "N/A",
+                    goals: eplStat?.goals.total ?? 0,
+                    appearances:
+                        eplStat?.games.appearences != null
+                            ? eplStat.games.appearences
+                            : "N/A",
                 };
             });
 
@@ -191,15 +195,15 @@ export const getEplPlayersByTeam = async (teamName) => {
             currentPage++;
         }
 
-        // Optional: Sort players by appearances in descending order
-        return allPlayers.sort((a, b) => b.appearances - a.appearances);
+        return allPlayers.sort((a, b) =>
+            (b.appearances === "N/A" ? -1 : b.appearances) -
+            (a.appearances === "N/A" ? -1 : a.appearances)
+        );
     } catch (error) {
         console.error(`EPL Team Players Error (${teamName}):`, error);
         return [];
     }
 };
-
-
 
 
 

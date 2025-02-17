@@ -1,15 +1,16 @@
-.team-page {
-    padding: 20px;
-}
-
-.team-page ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.team-page li {
-    margin: 5px 0;
+.player-item {
+    margin-bottom: 8px;
     background-color: #f4f4f4;
     padding: 8px;
     border-radius: 4px;
+}
+
+.player-name {
+    font-weight: bold;
+    color: #646cff;
+    text-decoration: none;
+}
+
+.player-name:hover {
+    text-decoration: underline;
 }
