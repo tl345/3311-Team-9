@@ -37,3 +37,9 @@ Currently, two official plugins are available:
 
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+
+# How to run/build the website on VS Code:
+- Download 'Node.js' and 'npm'
+- Once the repository is cloned from github, type 'npm install' into the terminal
+- Then type 'npm run dev' to build the tool, and a website link should come up.
