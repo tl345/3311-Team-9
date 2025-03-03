@@ -1,34 +1,40 @@
 .sports-section {
   display: flex;
-  justify-content: space-between;
+  justify-content: space-evenly; /* More even spacing */
   align-items: flex-start;
   width: 100%;
-  max-width: 1300px;
-  /* Extend max width */
+  max-width: 1400px; /* Extended max width */
   margin-top: 20px;
+  flex-wrap: wrap; /* Prevents overflow on smaller screens */
 }
 
 .sport-category {
   flex: 1;
   text-align: left;
-  min-width: 250px;
+  min-width: 280px;
   max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 15px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+/* Hover effect for better user interaction */
+.sport-category:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
 }
 
 .sport-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
-  min-height: 50px;
-  /* Same height for all */
+  margin-bottom: 12px;
+  min-height: 50px; /* Ensures all headers stay the same height */
 }
 
 .sport-logo {
@@ -46,15 +52,24 @@ ul {
 
 li {
   white-space: nowrap;
-  /* Force team/player names to stay on one line */
+  /* Ensures team/player names stay on one line */
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 16px;
+  transition: color 0.2s;
+}
+
+/* Hover effect for list items */
+li:hover {
+  color: #646cff;
+  cursor: pointer;
 }
 
 .teams-section {
   margin-top: 15px;
 }
 
+/* Styling team list */
 .team-list li {
   display: flex;
   align-items: center;
@@ -68,7 +83,37 @@ li {
   object-fit: contain;
 }
 
+/* Ensures player list area stays balanced */
 ol {
-  min-height: 150px;
-  /* Ensures player list area is balanced */
+  min-height: 160px;
+}
+
+/* "Teams" link styling */
+.teams-link {
+  display: inline-block;
+  padding: 10px 14px;
+  background: #646cff;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  text-align: center;
+  transition: 0.2s;
+}
+
+.teams-link:hover {
+  background: #535bf2;
+  cursor: pointer;
+}
+
+/* Responsive tweaks for smaller screens */
+@media (max-width: 1024px) {
+  .sports-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  .sport-category {
+    width: 90%;
+    margin-bottom: 15px;
+  }
 }
