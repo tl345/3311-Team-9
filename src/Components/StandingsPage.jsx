@@ -1,12 +1,30 @@
+/**
+ * StandingsPage Component
+ * 
+ * This component displays all teams for a specific sports league:
+ * - NBA: Teams displayed in alphabetical order
+ * - NFL: Teams displayed in order of win percentage
+ * - Premier League: Teams displayed in rank order with position numbers
+ * 
+ * The component fetches data from sport-specific API endpoints and
+ * provides navigation links to individual team pages.
+ */
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getNbaTeams, getNflTeams, getEplTeams } from "../api";
 
 function StandingsPage() {
+    // Extract league parameter from URL
     const { league } = useParams();
+
+    // State for teams data and loading status
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    /**
+     * Effect hook to fetch teams data when component mounts or league changes
+     * Uses different API functions based on the league parameter
+     */
     useEffect(() => {
         const fetchTeams = async () => {
             setLoading(true);
@@ -28,7 +46,7 @@ function StandingsPage() {
         };
 
         fetchTeams();
-    }, [league]);
+    }, [league]); // Re-fetch when league changes
 
     if (loading) return <p>Loading teams...</p>;
 
@@ -38,7 +56,9 @@ function StandingsPage() {
             <ul>
                 {teams.map((team, index) => (
                     <li key={team.name}>
+                        {/* Show ranking numbers for EPL */}
                         {league === "Premier League" && <strong>{index + 1}. </strong>}
+                        {/* Show team logo if available */}
                         {team.logo && (
                             <img
                                 src={team.logo}

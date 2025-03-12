@@ -17,17 +17,28 @@ Includes insights on team performance, standings, and rosters
 Features clickable "Players" and "Teams" buttons for each league
 Directs users to dedicated pages with in-depth information
 
-
 **Tech Stack**
 
-Frontend: React.js, Tailwind CSS 
-Backend: Node.js
-Database: MongoDB (for storing user data, favorites, and custom analytics)
-APIs: Various sports stats APIs (ESPN, SportRadar, etc.)
-Hosting & Deployment: Vercel / Netlify for frontend, MongoDB Atlas for database
+Frontend
+- React.js : Component-based UI library
+- React Router : Client-side routing and navigation
+- Axios : HTTP client for API requests
+- Vite : Fast development and build tool
 
+Backend
+- Node.js : JavaScript runtime environment
+- Express : Web application framework
+- MongoDB - Database for storing sports data
+- Mongoose - MongoDB object modeling
 
+Data Sources
+- NBA : REST NBA API for team and player statistics
+- NFL : Currently mock data (real API integration planned)
+- EPL : API-Football for Premier League data
 
+DevOps
+- Nodemon : Development server
+- MongoDB Atlas : Cloud database service
 
 # React + Vite
 
@@ -39,7 +50,42 @@ Currently, two official plugins are available:
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
 
-# How to run/build the website on VS Code:
-- Download 'Node.js' and 'npm'
-- Once the repository is cloned from github, type 'npm install' into the terminal
-- Then type 'npm run dev' to build the tool, and a website link should come up.
+# Setup Instructions
+Prerequisites
+- Node.js v18+ and npm installed
+- MongoDB Atlas account
+- Repository cloned from GitHub
+
+Backend Setup
+1. Navigate to the backend directory:
+    'cd backend'
+2. Install dependencies:
+    'npm install'
+3. Set up environment variables by creating a .env files with:
+    PORT=5000
+    MONGODB_URI=the_mongodb_connection_string
+    EPL_API_KEY=the_api_football_key
+4. Start the backend server:
+    'npm run dev'
+
+Frontend Setup
+1. In the root directory, install dependencies:
+    'npm install'
+2. Start the development server:
+    'npm run dev'
+3. Open the provided link (usually http://localhost:5173) in your browser
+
+# Data Update Process
+The application features a dedicated update system accessible through the "Update Data" button in the header. This process:
+
+1. Fetches the latest data from external APIs for all three sports leagues
+2. Processes player trades and team changes (especially important for NBA data)
+3. Calculates per-game statistics and other derived metrics
+4. Updates the MongoDB database with the latest information
+5. Records the update timestamp which is displayed on the homepage
+
+# Key Implementation Notes
+- Player Trading Handling: Special processing for NBA players who have been traded between teams
+- API Rate Limiting: Staggered requests with delays to prevent hitting API limits
+- Flexible Schema Design: Using MongoDB Maps for sport-specific statistics
+- Responsive Design: Adapts to different screen sizes for mobile and desktop usage

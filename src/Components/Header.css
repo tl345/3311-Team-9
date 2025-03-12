@@ -16,3 +16,17 @@
     gap: 10px;
   }
   
+  .update-link {
+    display: inline-block;
+    margin-right: 15px;
+    padding: 8px 12px;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  
+  .update-link:hover {
+    background-color: #3e8e41;
+  }

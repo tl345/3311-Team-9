@@ -1,71 +1,103 @@
+/**
+ * API client for the sports stats app
+ * 
+ * This file serves as the central interface between the frontend React components
+ * and the backend Express API. It handles all data fetching operations and
+ * transforms the data into formats expected by the components.
+ * 
+ * The structure is organized by sport (NBA, NFL, EPL) with separate functions
+ * for different data needs (teams, players, standings, etc.)
+ */
 import axios from 'axios';
 
-// API KEYS
-const NFL_API_KEY = 'c0c8578d-1eeb-4976-978d-e25218';
-const EPL_API_KEY = '74272b2cd0fc37666fcd516c9990a5c6';
+// Backend API base URL (will need to change this when deploying to production)
+const BACKEND_API_URL = 'http://localhost:5000/api';
 
-// ---------------- NBA (BallDontLie API) ---------------- //
+// ---------------- NBA ---------------- //
+/**
+ * Fetches top NBA players for display on the homepage
+ * Gets players from the specialized top-players endpoint that processes and formats players with their team names and stats
+ * @returns {Promise<Array>} Array of top NBA players
+ */
 export const getNbaPlayers = async () => {
     try {
-        const res = await axios.get('https://www.balldontlie.io/api/v1/players', {
-            params: { page: 1, per_page: 5 },
-        });
-
-        return res.data.data.map((player) => ({
-            id: player.id,
-            name: `${player.first_name} ${player.last_name}`,
-            team: player.team.full_name,
-            points: 'N/A',
-        }));
+      const res = await axios.get(`${BACKEND_API_URL}/top-players/NBA`);
+      return res.data;
     } catch (error) {
-        console.error('NBA Players Error (BallDontLie):', error);
-        return [];
+      console.error('NBA Players Error:', error);
+      return [];
     }
 };
 
+/**
+ * Fetches all NBA teams
+ * @returns {Promise<Array>} Array of NBA teams sorted alphabetically
+ */
 export const getNbaTeams = async () => {
     try {
-        const res = await axios.get('https://api-basketball.p.rapidapi.com/teams', {
-            headers: {
-                'x-apisports-key': EPL_API_KEY,
-                'x-rapidapi-host': 'api-basketball.p.rapidapi.com',
-            },
-            params: { league: 12, season: '2023-2024' }, // NBA League ID is 12
-        });
-
-        return res.data.response.map((team) => ({
-            id: team.id,
-            name: team.name,
-            logo: team.logo,
-        }));
+      // Get teams and sort alphabetically by name
+      const res = await axios.get(`${BACKEND_API_URL}/teams/NBA`);
+      return res.data
+        .map(team => ({
+          id: team.teamId,
+          name: team.displayName,
+          logo: team.logo,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
     } catch (error) {
-        console.error('NBA Teams Error (API-Basketball):', error);
-        return [];
+      console.error('NBA Teams Error:', error);
+      return [];
     }
 };
 
+/**
+ * Fetches players for a specific NBA team
+ * @param {*} teamName - Name of the team
+ * @returns {Promise<Array>} Array of players for the team
+ */
 export const getNbaPlayersByTeam = async (teamName) => {
     try {
-        const res = await axios.get('https://www.balldontlie.io/api/v1/players', {
-            params: { search: teamName, per_page: 30 }, // Increase per_page
-        });
-
-        return res.data.data.map((player) => ({
-            id: player.id,
-            name: `${player.first_name} ${player.last_name}`,
-            position: player.position || "N/A",
-            number: "N/A", // Jersey number not available in this API
-            appearances: "N/A",
-            goals: "N/A",
-        }));
+      // Find the team ID first
+      const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/NBA`);
+      const team = teamsRes.data.find(t => 
+        t.displayName.toLowerCase().includes(teamName.toLowerCase())
+      );
+      
+      if (!team) return [];
+      
+      // Get the team with its players
+      const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
+      return res.data.players.map(player => ({
+        id: player.playerId,
+        name: player.name,
+        position: player.position || "N/A",
+        number: player.number || "N/A",
+      }));
     } catch (error) {
-        console.error(`NBA Team Players Error (${teamName}):`, error);
-        return [];
+      console.error(`NBA Team Players Error (${teamName}):`, error);
+      return [];
     }
 };
 
-
 // ---------------- NFL (Mock Data) ---------------- //
+/**
+ * Fetches players for a specific NFL team
+ * @param {string} teamName - Name of the team
+ * @returns {Promise<Array>} Array of players for the team
+ */
+export const getNflPlayersByTeam = async (teamName) => {
+    // For now, return mock NFL players data based on team name
+    const mockPlayers = [
+      { id: `nfl_${Math.floor(Math.random() * 1000)}`, name: `QB ${teamName} #1`, position: "QB", number: "1" },
+      { id: `nfl_${Math.floor(Math.random() * 1000)}`, name: `RB ${teamName} #2`, position: "RB", number: "22" },
+      { id: `nfl_${Math.floor(Math.random() * 1000)}`, name: `WR ${teamName} #3`, position: "WR", number: "88" },
+      { id: `nfl_${Math.floor(Math.random() * 1000)}`, name: `TE ${teamName} #4`, position: "TE", number: "87" },
+      { id: `nfl_${Math.floor(Math.random() * 1000)}`, name: `OL ${teamName} #5`, position: "OL", number: "76" },
+    ];
+    
+    return mockPlayers;
+  };
+
 export const getNflPlayers = async () => {
     return [
         { name: 'Patrick Mahomes' },
@@ -113,132 +145,153 @@ export const getNflTeams = async () => {
     ];
 };
 
-// ---------------- EPL (API-FOOTBALL) ---------------- //
+// ---------------- EPL (Premier League) ---------------- //
+
+/**
+ * Fetches top EPL players based on goals scored
+ * @returns {Promise<Array>} Array of top goal-scoring EPL players
+ */
 export const getEplPlayers = async () => {
     try {
-        const res = await axios.get('https://v3.football.api-sports.io/players/topscorers', {
-            headers: { 'x-apisports-key': EPL_API_KEY },
-            params: { league: 39, season: 2023 },
-        });
-
-        return res.data.response.slice(0, 5).map((playerData) => ({
-            name: playerData.player.name,
-            team: playerData.statistics[0].team.name,
-            goals: playerData.statistics[0].goals.total,
-        }));
+      const res = await axios.get(`${BACKEND_API_URL}/top-players/EPL`);
+      return res.data;
     } catch (error) {
-        console.error('EPL Players Error:', error);
-        return [];
+      console.error('EPL Players Error:', error);
+      return [];
     }
 };
 
+/**
+ * Fetches all EPL teams
+ * @returns {Promise<Array>} Array of EPL teams sorted by rank
+ */
 export const getEplTeams = async () => {
     try {
-        const res = await axios.get('https://v3.football.api-sports.io/standings', {
-            headers: { 'x-apisports-key': EPL_API_KEY },
-            params: { league: 39, season: 2023 },
-        });
-
-        return res.data.response[0].league.standings[0].map((team) => ({
-            id: team.team.id,
-            name: team.team.name,
-            logo: team.team.logo,
-        }));
+      // Get teams sorted by standings (the backend sorts them by rank)
+      const res = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
+      return res.data.map(team => ({
+        id: team.teamId,
+        name: team.displayName,
+        logo: team.logo,
+      }));
     } catch (error) {
-        console.error('EPL Standings Error:', error);
-        return [];
+      console.error('EPL Teams Error:', error);
+      return [];
     }
 };
 
+/**
+ * Fetches players for a specific EPL team
+ * @param {string} teamName - Name of the team
+ * @returns {Promise<Array>} Array of players for the team
+ */
 export const getEplPlayersByTeam = async (teamName) => {
     try {
-        const eplTeams = await getEplTeams();
-        const team = eplTeams.find((t) =>
-            t.name.toLowerCase().includes(teamName.toLowerCase())
-        );
-
-        if (!team) {
-            console.error(`Team ${teamName} not found in EPL Teams`);
-            return [];
-        }
-
-        let allPlayers = [];
-        let currentPage = 1;
-        let totalPages = 1;
-
-        while (currentPage <= totalPages) {
-            const res = await axios.get("https://v3.football.api-sports.io/players", {
-                headers: { "x-apisports-key": EPL_API_KEY },
-                params: { team: team.id, season: 2023, page: currentPage },
-            });
-
-            const playersOnPage = res.data.response.map((playerData) => {
-                const eplStat = playerData.statistics.find(
-                    (stat) => stat.league.id === 39 && stat.league.season === 2023
-                );
-
-                return {
-                    id: playerData.player.id,
-                    name: playerData.player.name,
-                    position: eplStat?.games.position || "N/A",
-                    number: eplStat?.games.number ?? "N/A",
-                    goals: eplStat?.goals.total ?? 0,
-                    appearances:
-                        eplStat?.games.appearences != null
-                            ? eplStat.games.appearences
-                            : "N/A",
-                };
-            });
-
-            allPlayers = [...allPlayers, ...playersOnPage];
-            totalPages = res.data.paging.total;
-            currentPage++;
-        }
-
-        return allPlayers.sort((a, b) =>
-            (b.appearances === "N/A" ? -1 : b.appearances) -
-            (a.appearances === "N/A" ? -1 : a.appearances)
-        );
+      // Find the team ID first
+      const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
+      const team = teamsRes.data.find(t => 
+        t.displayName.toLowerCase().includes(teamName.toLowerCase())
+      );
+      
+      if (!team) return [];
+      
+      // Get the team with its players
+      const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
+      return res.data.players.map(player => ({
+        id: player.playerId,
+        name: player.name,
+        position: player.position || "N/A",
+        number: player.number || "N/A",
+        appearances: player.stats.gamesPlayed || "N/A",
+        goals: player.stats.sportStats?.goals || 0,
+      }));
     } catch (error) {
-        console.error(`EPL Team Players Error (${teamName}):`, error);
-        return [];
+      console.error(`EPL Team Players Error (${teamName}):`, error);
+      return [];
     }
 };
 
-
-
+/**
+ * Fetches detailed player statistics for any player
+ * @param {string} playerId - Player's unique ID
+ * @returns {Promise<Object>} Player details with sport-specific stats
+ */
 export const getPlayerDetails = async (playerId) => {
     try {
-        const res = await axios.get('https://v3.football.api-sports.io/players', {
-            headers: { 'x-apisports-key': EPL_API_KEY },
-            params: { id: playerId, season: 2023 },
-        });
-
-        const playerData = res.data.response[0].player;
-        const stats = res.data.response[0].statistics[0];
-
+      // Get player details from backend database
+      const res = await axios.get(`${BACKEND_API_URL}/player/${playerId}`);
+      const player = res.data;
+      
+      // Common player fields
+      const playerDetails = {
+        id: player.playerId,
+        name: player.name,
+        league: player.league,
+        nationality: player.nationality || "N/A",
+        age: player.age || "N/A",
+        height: player.height || "N/A",
+        weight: player.weight || "N/A",
+        appearances: player.stats?.gamesPlayed || "N/A",
+      };
+      
+      // Add sport-specific stats based on league
+      if (player.league === 'EPL') {
         return {
-            id: playerData.id,
-            name: playerData.name,
-            nationality: playerData.nationality,
-            age: playerData.age,
-            birth: playerData.birth,
-            height: playerData.height,
-            weight: playerData.weight,
-            appearances: stats.games.appearences ?? 'N/A',
-            goals: stats.goals.total ?? 0,
-            assists: stats.goals.assists ?? 0,
-            yellowCards: stats.cards.yellow ?? 0,
-            redCards: stats.cards.red ?? 0,
-            keyPasses: stats.passes.key ?? 0,
-            passAccuracy: stats.passes.accuracy ?? 'N/A',
-            penaltyGoals: stats.penalty.scored ?? 0,
-            tackles: stats.tackles.total ?? 0,
-            goalSaves: stats.goals.saves ?? 0,
+          ...playerDetails,
+          goals: player.stats?.sportStats?.goals || 0,
+          assists: player.stats?.sportStats?.assists || 0,
+          yellowCards: player.stats?.sportStats?.yellowCards || 0,
+          redCards: player.stats?.sportStats?.redCards || 0,
         };
+      } else if (player.league === 'NBA') {
+        return {
+          ...playerDetails,
+          points: player.stats?.sportStats?.points || 0,
+          assists: player.stats?.sportStats?.assists || 0,
+          rebounds: player.stats?.sportStats?.rebounds || 0,
+          blocks: player.stats?.sportStats?.blocks || 0,
+          steals: player.stats?.sportStats?.steals || 0
+        };
+      } else {
+        // NFL stats
+        return {
+          ...playerDetails,
+          touchdowns: player.stats?.sportStats?.touchdowns || 0,
+          yards: player.stats?.sportStats?.yards || 0,
+        };
+      }
     } catch (error) {
-        console.error(`Player Details Error (ID: ${playerId}):`, error);
-        return null;
+      console.error(`Player Details Error (ID: ${playerId}):`, error);
+      return null;
     }
 };
 
+/**
+ * Triggers a manual update of the sports data in the database
+ * Makes API calls to fetch fresh data from external sources
+ * @returns {Promise<Object>} Update results
+ */
+export const updateSportsData = async () => {
+  try {
+    const res = await axios.post(`${BACKEND_API_URL}/update`);
+    // Extract the nested result object
+    return res.data.result;
+  } catch (error) {
+    console.error('Failed to update sports data:', error);
+    return { success: false, message: 'Failed to update data' };
+  }
+};
+
+/**
+ * Fetches the most recent update timestamp
+ * @returns {Promise<Object|null>} Object containing timestamp information or null if not found
+ */
+export const getLastUpdateTime = async () => {
+    try {
+      const res = await axios.get(`${BACKEND_API_URL}/last-update`);
+      return res.data;
+    } catch (error) {
+      console.error('Failed to fetch update time:', error);
+      return null;
+    }
+};

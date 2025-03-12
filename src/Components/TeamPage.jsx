@@ -1,61 +1,97 @@
+/**
+ * TeamPage Component
+ * 
+ * This component displays the roster for a specific team in any supported sport (NBA, NFL, EPL).
+ * It handles:
+ * - Dynamic loading of players based on the team name and sport from URL parameters
+ * - Sport-specific player information display (different stats shown for different sports)
+ * - Navigation back to the homepage
+ * 
+ * The component fetches data using sport-specific API functions and presents
+ * the data in a consistent format regardless of sport type.
+ */
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { getNbaPlayersByTeam, getEplPlayersByTeam } from "../api";
+import { getNbaPlayersByTeam, getEplPlayersByTeam, getNflPlayersByTeam } from "../api";
 import "./TeamPage.css";
 
 function TeamPage() {
-    const { sport, teamName } = useParams();
-    const [players, setPlayers] = useState([]);
-    const [loading, setLoading] = useState(true);
+  // Extract sport and teamName from the URL
+  const { sport, teamName } = useParams();
 
-    useEffect(() => {
-        const fetchPlayers = async () => {
-            setLoading(true);
-            try {
-                if (sport === "NBA") {
-                    const nbaPlayers = await getNbaPlayersByTeam(teamName);
-                    setPlayers(nbaPlayers);
-                } else if (sport === "Premier League") {
-                    const eplPlayers = await getEplPlayersByTeam(teamName);
-                    setPlayers(eplPlayers);
-                } else {
-                    setPlayers([]);
-                }
-            } catch (error) {
-                console.error(`Failed to fetch players for ${teamName}:`, error);
-            }
-            setLoading(false);
-        };
+  // State for players data and loading status
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-        fetchPlayers();
-    }, [sport, teamName]);
+  /**
+   * Effect hook to fetch players when component mounts or parameters change
+   * Uses different API functions based on the sport parameter
+   */
+  useEffect(() => {
+    const fetchPlayers = async () => {
+      setLoading(true);
+      try {
+        // Sport specific API calls to get players for the selected team
+        if (sport === "NBA") {
+          const nbaPlayers = await getNbaPlayersByTeam(teamName);
+          setPlayers(nbaPlayers);
+        } else if (sport === "Premier League") {
+          const eplPlayers = await getEplPlayersByTeam(teamName);
+          setPlayers(eplPlayers);
+        } else if (sport === "NFL") {
+          const nflPlayers = await getNflPlayersByTeam(teamName);
+          setPlayers(nflPlayers);
+        } else {
+          setPlayers([]);
+        }
+      } catch (error) {
+        console.error(`Failed to fetch players for ${teamName}:`, error);
+      }
+      setLoading(false);
+    };
 
-    if (loading) return <p>Loading players...</p>;
+    fetchPlayers();
+  }, [sport, teamName]); // Re-fetch when sport or teamName changes
 
-    return (
-        <div className="team-page">
-            <h1>{teamName} - {sport}</h1>
-            <Link to="/">← Back to Home</Link>
+  if (loading) return <div>Loading players...</div>;
+  
+  if (!players.length) return <div>No players found for this team.</div>;
 
-            {players.length > 0 ? (
-                <ul>
-                    {players.map((player) => (
-                        <li key={player.id} className="player-item">
-                            <Link to={`/player/${player.id}`} className="player-name">{player.name}</Link>
-                            {" - "}
-                            <span>{player.position || 'N/A'}</span>
-                            {" - Goals: "}
-                            <span>{player.goals ?? 0}</span>
-                            {" - Appearances: "}
-                            <span>{player.appearances !== "N/A" ? player.appearances : "N/A"}</span>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>No players found for this team.</p>
+  return (
+    <div className="team-page">
+      <h1>{teamName}</h1>
+      <Link to="/" className="back-link">← Back to Home</Link>
+      
+      <div className="player-list">
+        {/* Map through players and render differently based on sport */}
+        {players.map(player => (
+          <Link 
+            to={`/player/${player.id}`} 
+            key={player.id} 
+            className="player-card"
+          >
+            {sport === "NBA" && (
+              <div>
+                <p>{player.name} - {player.position} - #{player.number}</p>
+              </div>
             )}
-        </div>
-    );
+            
+            {sport === "Premier League" && (
+              <div>
+                <p>{player.name} - {player.position} - Goals: {player.goals || 0} - Appearances: {player.appearances}</p>
+              </div>
+            )}
+            
+            {sport === "NFL" && (
+              <div>
+                <p>{player.name} - {player.position} - #{player.number}</p>
+              </div>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default TeamPage;
