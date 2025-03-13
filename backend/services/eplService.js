@@ -29,6 +29,9 @@ const CURRENT_SEASON = 2024;
  */
 export const updateEPLData = async () => {
   try {
+    // Clear all existing EPL data before update to ensure a "clean slate"
+    // This approach prevents stale data (e.g., players who left teams) and ensures data consistency at the cost of full database recreation
+    // Should look to fix this in the future but at least the app is working
     console.log('Clearing existing EPL data before update...');
     await Team.deleteMany({ league: 'EPL' });
     await Player.deleteMany({ league: 'EPL' });
