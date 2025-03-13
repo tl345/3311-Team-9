@@ -1,8 +1,8 @@
-**Project Overview**
+# Project Overview
 
 Our website will be an interactive platform designed to showcase player statistics from the NBA, NFL, and Premier League. The homepage will present dynamic "Trending Players" sections for each sport, allowing users to quickly see the top five performers based on recent data. From this main screen, users can seamlessly navigate to detailed player profiles and team information—including performance metrics, standings, and rosters. While our primary focus is on delivering clear, real-time trending data with intuitive navigation, we also plan to explore advanced enhancements such as normalized data analysis to identify statistical outliers (by computing z-scores for key metrics) and unique visualizations like performance trend lines, scatter plots, and interactive heat maps. These enhancements, time permitting, will offer deeper insights and set our platform apart from traditional sports statistics sites.
 
-**Features**
+# Features
 
 1. Multi-League Coverage
 Aggregates statistics and trends for NBA, NFL, and Premier League
@@ -17,26 +17,26 @@ Includes insights on team performance, standings, and rosters
 Features clickable "Players" and "Teams" buttons for each league
 Directs users to dedicated pages with in-depth information
 
-**Tech Stack**
+# Tech Stack
 
-Frontend
+**Frontend**
 - React.js : Component-based UI library
 - React Router : Client-side routing and navigation
 - Axios : HTTP client for API requests
 - Vite : Fast development and build tool
 
-Backend
+**Backend**
 - Node.js : JavaScript runtime environment
 - Express : Web application framework
 - MongoDB - Database for storing sports data
 - Mongoose - MongoDB object modeling
 
-Data Sources
+**Data Sources**
 - NBA : REST NBA API for team and player statistics
 - NFL : Currently mock data (real API integration planned)
 - EPL : API-Football for Premier League data
 
-DevOps
+**DevOps**
 - Nodemon : Development server
 - MongoDB Atlas : Cloud database service
 
@@ -51,24 +51,24 @@ Currently, two official plugins are available:
 
 
 # Setup Instructions
-Prerequisites
+**Prerequisites**
 - Node.js v18+ and npm installed
 - MongoDB Atlas account
 - Repository cloned from GitHub
 
-Backend Setup
+**Backend Setup**
 1. Navigate to the backend directory:
     'cd backend'
 2. Install dependencies:
     'npm install'
-3. Set up environment variables by creating a .env files with:
+3. Set up environment variables by creating a .env file (in the backend directory) with:
     PORT=5000
     MONGODB_URI=the_mongodb_connection_string
     EPL_API_KEY=the_api_football_key
 4. Start the backend server:
     'npm run dev'
 
-Frontend Setup
+**Frontend Setup**
 1. In the root directory, install dependencies:
     'npm install'
 2. Start the development server:

@@ -10,7 +10,7 @@
  * 
  * The service is designed to be resilient to API failures and implements staggered requests to stay within API usage limits
  */
-import axios from 'axios';
+import axios, { all } from 'axios';
 import Team from '../models/Team.js';
 import Player from '../models/Player.js';
 
@@ -21,6 +21,7 @@ const API_SOURCES = {
 
 // Active API source
 const ACTIVE_API = API_SOURCES.API_FOOTBALL;
+const CURRENT_SEASON = 2024;
 
 /**
  * Updates all EPL data by fetching from the selected API source
@@ -28,6 +29,10 @@ const ACTIVE_API = API_SOURCES.API_FOOTBALL;
  */
 export const updateEPLData = async () => {
   try {
+    console.log('Clearing existing EPL data before update...');
+    await Team.deleteMany({ league: 'EPL' });
+    await Player.deleteMany({ league: 'EPL' });
+
     if (ACTIVE_API === API_SOURCES.API_FOOTBALL) {
       return await updateFromApiFootball();
     }
@@ -53,12 +58,17 @@ export const updateEPLData = async () => {
  */
 async function updateFromApiFootball() {
   try {
+    console.log('Fetching EPL standings data for season 2024...');
     // First API call: Get standings which includes teams
     const response = await axios.get('https://v3.football.api-sports.io/standings', {
       headers: { 'x-apisports-key': process.env.EPL_API_KEY },
-      params: { league: 39, season: 2024 }, // 2024-2025 season
+      params: { league: 39, season: CURRENT_SEASON },
     });
     
+    // Log response structure to help diagnose issues
+    //console.log(`EPL standings API response status: ${response.status}`);
+    console.log(`EPL teams found: ${response.data?.response?.[0]?.league?.standings?.[0]?.length || 0}`);
+
     // Extract teams from the standings response
     const teams = response.data.response[0].league.standings[0];
     let successCount = 0;
@@ -93,60 +103,105 @@ async function updateFromApiFootball() {
       successCount++;
       
       // Second API call: Get players for this team (implementing careful rate limiting to avoid API throttling)
+      // Implemented pagination to get all players who might be on page 2 or beyond
       try {
-        const playersResponse = await axios.get('https://v3.football.api-sports.io/players', {
-          headers: { 'x-apisports-key': process.env.EPL_API_KEY },
-          params: { team: team.id, season: 2024 }, // 2024-2025 season
-        });
+        //console.log(`Fetching players for ${team.name} (ID: ${team.id})...`);
+
+        let allPlayers = [];
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Loop through all pages of players
+        while (currentPage <= totalPages) {
+          const playersResponse = await axios.get('https://v3.football.api-sports.io/players', {
+            headers: { 'x-apisports-key': process.env.EPL_API_KEY },
+            params: { 
+              team: team.id, 
+              season: CURRENT_SEASON,
+              page: currentPage
+            },
+          });
+
+          // Add this page's players to our collection
+          allPlayers = [...allPlayers, ...playersResponse.data.response];
+          
+          // Update pagination info
+          totalPages = playersResponse.data.paging.total;
+          //console.log(`Fetched page ${currentPage} of ${totalPages} for ${team.name}`);
+          currentPage++;
+
+          // Delay between pages
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        console.log(`Found ${allPlayers.length} players for ${team.name}`);
         
         // Process each player from this team
-        for (const playerData of playersResponse.data.response) {
+        for (const playerData of allPlayers) {
           const player = playerData.player;
-          const stats = playerData.statistics[0]; // First stat entry has current season stats
+
+          // Extract Premier League-specific statistics from player data
+          // Players may have stats from multiple competitions (Champions League, FA Cup, etc.)
+          // By filtering for league ID 39 (Premier League), we get more accurate statistics
+          // Fallback to first entry only if no Premier League stats exist
+          const stats = playerData.statistics.find(
+            (stat) => stat.league.id === 39 && stat.league.season === CURRENT_SEASON
+          ) || playerData.statistics[0]; // Fallback to first entry if no EPL stats
           
           // Update or create player record
-          await Player.findOneAndUpdate(
-            { playerId: `epl_${player.id}` },
-            {
-              teamId: `epl_${team.id}`,
-              league: 'EPL',
-              name: player.name,
-              position: stats?.games?.position || "N/A",
-              number: stats?.games?.number,
-              nationality: player.nationality,
-              age: player.age,
-              height: player.height,
-              weight: player.weight,
-              image: player.photo,
-              stats: {
-                gamesPlayed: stats?.games?.appearences || 0,
-                gamesStarted: stats?.games?.lineups || 0,
-                sportStats: new Map([
-                  ['goals', stats?.goals?.total || 0],
-                  ['assists', stats?.goals?.assists || 0],
-                  ['yellowCards', stats?.cards?.yellow || 0],
-                  ['redCards', stats?.cards?.red || 0]
-                ])
+          // Only includes players with at least one appearance in the Premier League
+          if (stats && stats.games?.appearences > 0) {
+            await Player.findOneAndUpdate(
+              { playerId: `epl_${player.id}` },
+              {
+                teamId: `epl_${team.id}`,
+                league: 'EPL',
+                name: player.name,
+                position: stats?.games?.position || "N/A",
+                number: stats?.games?.number,
+                nationality: player.nationality,
+                age: player.age,
+                height: player.height,
+                weight: player.weight,
+                image: player.photo,
+                stats: {
+                  gamesPlayed: stats?.games?.appearences || 0,
+                  gamesStarted: stats?.games?.lineups || 0,
+                  sportStats: new Map([
+                    ['goals', stats?.goals?.total || 0],
+                    ['assists', stats?.goals?.assists || 0],
+                    ['yellowCards', stats?.cards?.yellow || 0],
+                    ['redCards', stats?.cards?.red || 0]
+                  ])
+                },
+                lastUpdated: new Date()
               },
-              lastUpdated: new Date()
-            },
-            { upsert: true, new: true }
-          );
+              { upsert: true, new: true }
+            );
+          }
+          //console.log(`Updated player: ${player.name} (${player.id}) for ${team.name}`);
         }
         
         // Add a delay to avoid hitting API rate limits (API-Football has strict limits)
         await new Promise(resolve => setTimeout(resolve, 500));
         
       } catch (playerError) {
-        // If player fetching fails for one team, log it but continue with other teams
-        console.error(`Error fetching players for team ${team.name}:`, playerError);
+        console.error(`Error fetching players for team ${team.name}:`, playerError.message);
+        if (playerError.response) {
+          console.error(`Status: ${playerError.response.status}`);
+          console.error('Response data:', playerError.response.data);
+        }
       }
     }
     
     console.log(`Successfully updated ${successCount} EPL teams`);
     return true;
   } catch (error) {
-    console.error('API-Football update error:', error);
+    console.error('API-Football update error:', error.message);
+    if (error.response) {
+      console.error(`Status: ${error.response.status}`);
+      console.error('Response data:', error.response.data);
+    }
     return false;
   }
 }
