@@ -51,30 +51,29 @@ function StandingsPage() {
     if (loading) return <p>Loading teams...</p>;
 
     return (
-        <div>
-            <h1>{league} Standings</h1>
-            <ul>
-                {teams.map((team, index) => (
-                    <li key={team.name}>
-                        {/* Show ranking numbers for EPL */}
-                        {league === "Premier League" && <strong>{index + 1}. </strong>}
-                        {/* Show team logo if available */}
-                        {team.logo && (
-                            <img
-                                src={team.logo}
-                                alt={team.name}
-                                style={{ width: "25px", height: "25px", marginRight: "10px" }}
-                            />
-                        )}
-                        <Link to={`/team/${league}/${encodeURIComponent(team.name)}`}>
-                            {team.name}
-                        </Link>
-                    </li>
-                ))}
-            </ul>
-            <Link to="/">← Back to Home</Link>
+        <div className="standings-container">
+          <h1 className="standings-title">{league} Standings</h1>
+          <ul className="standings-list">
+            {teams.map((team, index) => (
+              <li key={team.name}>
+                {league === "Premier League" && <strong>{index + 1}. </strong>}
+                {team.logo && (
+                  <img
+                    src={team.logo}
+                    alt={team.name}
+                    style={{ width: "30px", height: "30px", marginRight: "10px" }}
+                  />
+                )}
+                <Link to={`/team/${league}/${encodeURIComponent(team.name)}`}>
+                  {team.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link to="/">← Back to Home</Link>
         </div>
-    );
+      );
+      
 }
 
 export default StandingsPage;

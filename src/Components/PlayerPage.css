@@ -1,0 +1,86 @@
+/* Center the player details and adjust width */
+.player-details {
+  max-width: 900px; /* Slightly wider for better spacing */
+  margin: 30px auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* Increase header size */
+.player-header h1 {
+  font-size: 3rem; /* 3x larger */
+  margin-bottom: 10px;
+}
+
+/* Player team name and logo alignment */
+.player-team {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: 2rem; /* Increased size */
+  font-weight: bold;
+}
+
+.team-logo {
+  width: 60px; /* Bigger team logo */
+  height: 60px;
+  object-fit: contain;
+}
+
+/* Increase player image size */
+.player-image-container {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.player-image {
+  width: 250px; /* Larger image */
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Increase general player info font size */
+.player-info p {
+  font-size: 1.5rem; /* 3x larger */
+  margin: 8px 0;
+  font-weight: bold;
+}
+
+/* Increase font size for stats */
+.nba-stats, .nfl-stats, .epl-stats {
+  font-size: 1.5rem; /* 3x larger */
+  text-align: left;
+  margin-top: 15px;
+}
+
+.nba-stats h3, .nfl-stats h3, .epl-stats h3 {
+  font-size: 2rem; /* 3x larger */
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Adjust stats layout */
+.nba-stats p, .nfl-stats p, .epl-stats p {
+  margin: 6px 0;
+  font-size: 1.3rem; /* Make stats larger */
+}
+
+/* Increase back button size */
+.back-link {
+  display: block;
+  margin-top: 20px;
+  font-size: 1.5rem; /* Bigger back button */
+  text-decoration: none;
+  color: #646cff;
+  font-weight: bold;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}

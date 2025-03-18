@@ -1,145 +1,75 @@
-.sports-section {
-  display: flex;
-  justify-content: space-evenly; /* More even spacing */
-  align-items: flex-start;
-  width: 100%;
-  max-width: 1400px; /* Extended max width */
-  margin-top: 20px;
-  flex-wrap: wrap; /* Prevents overflow on smaller screens */
-}
-
-.sport-category {
-  flex: 1;
-  text-align: left;
-  min-width: 280px;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-/* Hover effect for better user interaction */
-.sport-category:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-}
-
-.sport-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-  min-height: 50px; /* Ensures all headers stay the same height */
-}
-
-.sport-logo {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-ol,
-ul {
-  padding-left: 0;
-  margin: 0;
-  list-style-position: inside;
-}
-
-li {
-  white-space: nowrap;
-  /* Ensures team/player names stay on one line */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 16px;
-  transition: color 0.2s;
-}
-
-/* Hover effect for list items */
-li:hover {
-  color: #646cff;
-  cursor: pointer;
-}
-
-.teams-section {
-  margin-top: 15px;
-}
-
-/* Styling team list */
-.team-list li {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-}
-
-.team-list img {
-  width: 24px;
-  height: 24px;
-  margin-right: 10px;
-  object-fit: contain;
-}
-
-/* Ensures player list area stays balanced */
-ol {
-  min-height: 160px;
-}
-
-/* "Teams" link styling */
-.teams-link {
-  display: inline-block;
-  padding: 10px 14px;
-  background: #646cff;
-  color: white;
-  border-radius: 5px;
-  text-decoration: none;
-  font-weight: bold;
-  text-align: center;
-  transition: 0.2s;
-}
-
-.teams-link:hover {
-  background: #535bf2;
-  cursor: pointer;
-}
-
 .homepage-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 1400px;
 }
+
+.sports-section {
+  display: flex;
+  justify-content: space-around; /* Ensure even spacing */
+  align-items: stretch;
+  width: 100%;
+  max-width: 1400px;
+  margin-top: 40px; /* Increased margin for better spacing */
+  gap: 30px; /* Increased spacing between boxes */
+}
+
+.sport-category {
+  flex: 1;
+  text-align: center;
+  min-width: 350px; /* Increased width */
+  max-width: 400px; /* Keeps them uniform */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px; /* More padding */
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-size: 1.2rem; /* Increased font size */
+}
+
+.sport-category:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.sport-header h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.sport-logo {
+  width: 50px;
+  height: 50px;
+}
+
+.teams-link {
+  font-size: 1.4rem; /* Increase font size */
+  padding: 14px 22px; /* Increase padding for a larger button */
+  background: #646cff;
+  border-radius: 10px; /* More rounded corners */
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-block; /* Ensures proper spacing */
+  transition: background 0.2s ease-in-out, transform 0.2s;
+}
+
+.teams-link:hover {
+  background: #535bf2;
+  transform: scale(1.1); /* Slightly enlarges on hover */
+  cursor: pointer;
+}
+
 
 .last-update-info {
-  background-color: #f2f8ff;
-  border: 1px solid #d0e3ff;
-  border-radius: 4px;
-  padding: 8px 12px;
-  margin-bottom: 20px;
-  width: 100%;
-  max-width: 800px;
-  text-align: center;
-  font-size: 14px;
-  color: #4a5568;
-}
-
-.update-label {
+  font-size: 1.1rem;
   font-weight: bold;
-  margin-right: 4px;
-}
-
-/* Responsive tweaks for smaller screens */
-@media (max-width: 1024px) {
-  .sports-section {
-    flex-direction: column;
-    align-items: center;
-  }
-  .sport-category {
-    width: 90%;
-    margin-bottom: 15px;
-  }
+  margin-bottom: 15px;
+  color: white;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 15px;
+  border-radius: 5px;
 }

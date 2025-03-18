@@ -22,6 +22,9 @@ import { Link } from "react-router-dom";
  * @returns {JSX.Element} The rendered player list or a message if no players
  */
 function PlayerList({ players, sport }) {
+  console.log("Players:", players); // Debugging Log
+  console.log("Sport:", sport);
+
   if (!players || players.length === 0) {
     return <div>No players found.</div>;
   }

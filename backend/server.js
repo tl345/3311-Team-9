@@ -17,32 +17,30 @@ import connectDB from './config/db.js';
 import apiRoutes from './routes/api.js';
 import { updateSportsData } from './services/updateService.js';
 
-// Load environment variables from .env file
+// ✅ Load environment variables from .env file (remove redundant require)
 dotenv.config();
 
-// Connect to MongoDB database with connection settings from config
+// ✅ Connect to MongoDB database
 connectDB();
 
-// Initialize Express application
+// ✅ Initialize Express application
 const app = express();
 
-// Configure middleware
+// ✅ Configure middleware
 app.use(cors()); // Enable Cross-Origin Resource Sharing for frontend access
 app.use(express.json()); // Parse incoming JSON payloads in request bodies
 
-// Register API routes (all endpoints under /api prefix)
+// ✅ Register API routes (all endpoints under /api prefix)
 app.use('/api', apiRoutes);
 
-// Health check endpoint to verify the server is running
-// Used for monitoring and deployment verification
+// ✅ Health check endpoint to verify the server is running
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
 /**
- * Manual data update endpoint
+ * ✅ Manual data update endpoint
  * Triggers immediate data refresh from all sports APIs
- * Used by the update page in the frontend
  */
 app.post('/api/update', async (req, res) => {
   try {
@@ -62,6 +60,6 @@ app.post('/api/update', async (req, res) => {
   }
 });
 
-// Start server on specified port from environment or default to 5000
+// ✅ Start server on specified port from environment or default to 5000
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

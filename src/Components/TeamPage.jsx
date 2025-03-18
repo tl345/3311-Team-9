@@ -11,38 +11,43 @@
  * the data in a consistent format regardless of sport type.
  */
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { getNbaPlayersByTeam, getEplPlayersByTeam, getNflPlayersByTeam } from "../api";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { getNbaPlayersByTeam, getEplPlayersByTeam, getNflPlayersByTeam, getNbaTeams, getEplTeams, getNflTeams } from "../api";
 import "./TeamPage.css";
 
 function TeamPage() {
-  // Extract sport and teamName from the URL
   const { sport, teamName } = useParams();
+  const location = useLocation(); // Detects navigation change
 
-  // State for players data and loading status
+  // ✅ State for players and team logo
   const [players, setPlayers] = useState([]);
+  const [teamLogo, setTeamLogo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  /**
-   * Effect hook to fetch players when component mounts or parameters change
-   * Uses different API functions based on the sport parameter
-   */
   useEffect(() => {
     const fetchPlayers = async () => {
       setLoading(true);
       try {
-        // Sport specific API calls to get players for the selected team
+        let fetchedPlayers = [];
+        let fetchedTeams = [];
+
         if (sport === "NBA") {
-          const nbaPlayers = await getNbaPlayersByTeam(teamName);
-          setPlayers(nbaPlayers);
+          fetchedPlayers = await getNbaPlayersByTeam(teamName);
+          fetchedTeams = await getNbaTeams();
         } else if (sport === "Premier League") {
-          const eplPlayers = await getEplPlayersByTeam(teamName);
-          setPlayers(eplPlayers);
+          fetchedPlayers = await getEplPlayersByTeam(teamName);
+          fetchedTeams = await getEplTeams();
         } else if (sport === "NFL") {
-          const nflPlayers = await getNflPlayersByTeam(teamName);
-          setPlayers(nflPlayers);
-        } else {
-          setPlayers([]);
+          fetchedPlayers = await getNflPlayersByTeam(teamName);
+          fetchedTeams = await getNflTeams();
+        }
+
+        setPlayers(fetchedPlayers);
+
+        // ✅ Find the team logo
+        const teamData = fetchedTeams.find(team => team.name.toLowerCase() === teamName.toLowerCase());
+        if (teamData && teamData.logo) {
+          setTeamLogo(teamData.logo);
         }
       } catch (error) {
         console.error(`Failed to fetch players for ${teamName}:`, error);
@@ -51,37 +56,34 @@ function TeamPage() {
     };
 
     fetchPlayers();
-  }, [sport, teamName]); // Re-fetch when sport or teamName changes
+  }, [sport, teamName, location.pathname]); // ✅ Re-fetch when navigating back
 
   if (loading) return <div>Loading players...</div>;
-  
+
   if (!players.length) return <div>No players found for this team.</div>;
 
   return (
     <div className="team-page">
-      <h1>{teamName}</h1>
+      <div className="team-header">
+        {teamLogo && <img src={teamLogo} alt={`${teamName} Logo`} className="team-logo" />}
+        <h1>{teamName}</h1>
+      </div>
+
       <Link to="/" className="back-link">← Back to Home</Link>
       
       <div className="player-list">
-        {/* Map through players and render differently based on sport */}
         {players.map(player => (
-          <Link 
-            to={`/player/${player.id}`} 
-            key={player.id} 
-            className="player-card"
-          >
+          <Link to={`/player/${player.id}`} key={player.id} className="player-card">
             {sport === "NBA" && (
               <div>
                 <p>{player.name} - {player.position} - #{player.number}</p>
               </div>
             )}
-            
             {sport === "Premier League" && (
               <div>
                 <p>{player.name} - {player.position} - Goals: {player.goals || 0} - Appearances: {player.appearances}</p>
               </div>
             )}
-            
             {sport === "NFL" && (
               <div>
                 <p>{player.name} - {player.position} - #{player.number}</p>
@@ -95,3 +97,4 @@ function TeamPage() {
 }
 
 export default TeamPage;
+

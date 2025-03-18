@@ -19,10 +19,11 @@ function Header() {
     <header className="header">
       {/* Site logo/name with link back to homepage */}
       <div className="logo-container">
-        <Link to="/" className="logo">
-          StatZone
-        </Link>
-      </div>
+  <Link to="/" className="logo">
+    StatZone
+  </Link>
+</div>
+
       
       {/* Search functionality (placeholder for future implementation) */}
       <SearchBar />

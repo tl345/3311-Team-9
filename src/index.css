@@ -1,76 +1,120 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Center the content */
+.standings-container {
+  max-width: 60%; 
+  margin: 0 auto;
+  padding: 10px;
+  text-align: center;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
 
-body {
-  margin: 0;
+
+/* Make the list items spread out */
+.standings-list {
+  display: flex;
+  flex-direction: column; /* Ensure teams stack in 1 column */
+  align-items: center;
   width: 100%;
+  list-style: none;
+  padding: 0;
+}
+
+
+
+/* Team items should be aligned left */
+.standings-list li {
+  width: 50%;
+  text-align: left;
+  font-size: 1.1rem; 
+  padding: 5px 0;
+  margin: 2px 0;
+  display: flex;
+  align-items: center; 
+  gap: 8px; 
+}
+
+
+.standings-list img {
+  width: 25px; 
+  height: 25px;
+  margin-right: 5px;
+  vertical-align: middle; 
+}
+
+.player-name {
+  font-size: 2.5rem; 
+  font-weight: bold;
+  color: blue;
+  text-decoration: none;
+}
+.player-item {
+  margin-bottom: 8px; 
+}
+
+/* Adjust header size */
+.standings-title {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+
+/* Add more spacing for better visual balance */
+.standings-container a {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 1.2rem;
+  color: #646cff;
+}
+/* Apply background image to the entire app */
+body {
+  background-image: url('./assets/sport.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+
+/* Ensure content is readable over the background */
+.app {
+  background-color: rgba(255, 255, 255, 0.85); /* Light overlay */
   min-height: 100vh;
+  padding: 20px;
+}
+
+/* Ensure player details page has good readability */
+.player-details {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Player image styles */
+.player-image-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.player-image {
+  width: 200px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.no-image-text {
+  font-style: italic;
+  color: gray;
+}
+
+.homepage-container {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
+  justify-content: center;
 }
-
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
 body {
-  background: linear-gradient(to bottom, #f8f9fa, #e9ecef); /* Light gradient */
+  background-color: #f0f0f0; /* Light gray */
 }
-

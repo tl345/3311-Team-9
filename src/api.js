@@ -186,30 +186,41 @@ export const getEplTeams = async () => {
  * @returns {Promise<Array>} Array of players for the team
  */
 export const getEplPlayersByTeam = async (teamName) => {
-    try {
-      // Find the team ID first
-      const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
-      const team = teamsRes.data.find(t => 
-        t.displayName.toLowerCase().includes(teamName.toLowerCase())
-      );
-      
-      if (!team) return [];
-      
-      // Get the team with its players
-      const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
-      return res.data.players.map(player => ({
-        id: player.playerId,
-        name: player.name,
-        position: player.position || "N/A",
-        number: player.number || "N/A",
-        appearances: player.stats.gamesPlayed || "N/A",
-        goals: player.stats.sportStats?.goals || 0,
-      }));
-    } catch (error) {
-      console.error(`EPL Team Players Error (${teamName}):`, error);
+  try {
+    console.log(`Fetching players for team: ${teamName}`); // Debug log
+
+    // Fetch all teams first to find the correct team
+    const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
+    console.log("Teams response:", teamsRes.data);
+
+    const team = teamsRes.data.find(t => 
+      t.displayName.toLowerCase().includes(teamName.toLowerCase())
+    );
+
+    if (!team) {
+      console.warn(`Team not found: ${teamName}`);
       return [];
     }
+
+    // Fetch players from the found team
+    const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
+    console.log("Players response:", res.data.players);
+
+    return res.data.players.map(player => ({
+      id: player.playerId,
+      name: player.name,
+      position: player.position || "N/A",
+      number: player.number || "N/A",
+      appearances: player.stats?.gamesPlayed || "N/A",
+      goals: player.stats?.sportStats?.goals || 0,
+    }));
+
+  } catch (error) {
+    console.error(`EPL Team Players Error (${teamName}):`, error);
+    return [];
+  }
 };
+
 
 /**
  * Fetches detailed player statistics for any player
