@@ -16,10 +16,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px; /* Increased padding for more space */
+  padding: 15px 20px;
   background-color: #333;
   color: white;
+
+  position: sticky;        /* 👈 Make the header sticky */
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* 👈 Add drop shadow */
 }
+
 
 .StatZone {
   font-size: 2.5rem; /* Increase font size */
@@ -62,3 +68,5 @@
   outline: none;
   box-shadow: 0 0 8px rgba(100, 108, 255, 0.5); /* Soft glow effect */
 }
+
+

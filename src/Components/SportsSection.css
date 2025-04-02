@@ -47,21 +47,24 @@
 }
 
 .teams-link {
-  font-size: 1.4rem; /* Increase font size */
-  padding: 14px 22px; /* Increase padding for a larger button */
+  font-size: 1.4rem;
+  padding: 14px 22px;
   background: #646cff;
-  border-radius: 10px; /* More rounded corners */
+  border-radius: 10px;
   text-decoration: none;
   font-weight: bold;
-  display: inline-block; /* Ensures proper spacing */
-  transition: background 0.2s ease-in-out, transform 0.2s;
+  display: inline-block;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .teams-link:hover {
   background: #535bf2;
-  transform: scale(1.1); /* Slightly enlarges on hover */
-  cursor: pointer;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
+
 
 
 .last-update-info {
