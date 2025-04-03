@@ -61,17 +61,17 @@ function SportsSection() {
     { 
       name: "NFL", 
       logo: nflLogo, 
-      players: nflTopPlayers?.map(p => p.name) || []
+      players: nflTopPlayers || []
     },
     { 
       name: "NBA", 
       logo: nbaLogo, 
-      players: nbaTopPlayers?.map(p => p.name) || []
+      players: nbaTopPlayers || []
     },
     { 
       name: "Premier League", 
       logo: premLogo, 
-      players: eplTopPlayers?.map(p => p.name) || []
+      players: eplTopPlayers || []
     },
   ];
 
@@ -100,7 +100,11 @@ function SportsSection() {
             <ol>
               {sport.players.length > 0 ? (
                 sport.players.map((player, idx) => (
-                  <li key={idx}>{player}</li>
+                  <li key={idx}>
+                    <Link to={`/player/${player.id}`} className="player-link">
+                      {player.name}
+                    </Link>
+                  </li>
                 ))
               ) : (
                 <li style={{ fontStyle: 'italic', color: 'gray' }}>No Data Available</li>

@@ -13,12 +13,13 @@
   max-width: 1400px;
   margin-top: 40px; /* Increased margin for better spacing */
   gap: 30px; /* Increased spacing between boxes */
+  flex-wrap: wrap; /* Allow items to wrap */
 }
 
 .sport-category {
   flex: 1;
   text-align: center;
-  min-width: 350px; /* Increased width */
+  min-width: 250px; /* Adjusted minimum width for better responsiveness */
   max-width: 400px; /* Keeps them uniform */
   display: flex;
   flex-direction: column;
@@ -65,8 +66,6 @@
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
-
-
 .last-update-info {
   font-size: 1.1rem;
   font-weight: bold;
@@ -75,4 +74,28 @@
   background: rgba(0, 0, 0, 0.6);
   padding: 10px 15px;
   border-radius: 5px;
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 768px) {
+  .sports-section {
+    flex-direction: column; /* Stack categories vertically */
+    align-items: center; /* Center align */
+  }
+
+  .sport-category {
+    min-width: 100%; /* Full width on mobile */
+    max-width: none; /* Remove max width */
+    margin-bottom: 20px; /* Space between categories */
+    padding: 20px; /* Adjust padding */
+  }
+
+  .sport-header h2 {
+    font-size: 1.5rem; /* Smaller font size */
+  }
+
+  .teams-link {
+    font-size: 1.2rem; /* Smaller font size */
+    padding: 10px 15px; /* Adjust padding */
+  }
 }

@@ -35,3 +35,4 @@ backend/dist
 
 # MongoDB data files
 /data
+.vercel
