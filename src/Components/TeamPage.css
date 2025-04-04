@@ -1,8 +1,50 @@
-.team-page {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
+.team-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.team-box {
+  flex: 1;
+  text-align: center;
+  min-width: 250px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-size: 1.2rem;
+  color: #333;
+  border: 1px solid #e0e0e0;
+}
+
+.team-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.league-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.league-logo {
+  width: 40px;
+  height: 40px;
+}
+
+.league-name {
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
+}
   
   h1 {
     font-size: 2rem; /* Increase the team name size */
@@ -42,11 +84,12 @@
   .player-card:hover {
     text-decoration: underline;
   }
-  .team-header {
-    display: flex;
-    align-items: center;
-    gap: 15px; /* Adds spacing between logo and text */
-  }
+.team-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
   
   .team-logo {
     width: 50px;

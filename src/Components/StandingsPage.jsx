@@ -12,6 +12,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getNbaTeams, getNflTeams, getEplTeams } from "../api";
+import "./StandingsPage.css";
 
 function StandingsPage() {
     // Extract league parameter from URL
@@ -51,7 +52,7 @@ function StandingsPage() {
     if (loading) return <p>Loading teams...</p>;
 
     return (
-        <div className="standings-container">
+        <div className="standings-box">
           <h1 className="standings-title">{league} Standings</h1>
           <ul className="standings-list">
             {teams.map((team, index) => (

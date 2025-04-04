@@ -75,9 +75,8 @@ body {
 }
 
 
-/* Ensure content is readable over the background */
+/* Main app container */
 .app {
-  background-color: rgba(255, 255, 255, 0.85); /* Light overlay */
   min-height: 100vh;
   padding: 20px;
 }
@@ -116,5 +115,9 @@ body {
   justify-content: center;
 }
 body {
-  background-color: #f0f0f0; /* Light gray */
+  background-image: url('./assets/background.png');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed; 
 }

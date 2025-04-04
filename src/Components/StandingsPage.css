@@ -1,0 +1,59 @@
+.standings-box {
+  text-align: center;
+  width: 80%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  font-size: 1.4rem;
+  color: #333;
+  border: 1px solid #e0e0e0;
+  margin: 40px auto;
+}
+
+.standings-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.standings-title {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.standings-list {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+.standings-list li {
+  margin: 15px 0;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  font-size: 1.3rem;
+}
+
+.standings-list a {
+  text-decoration: none;
+  color: #1a0dab;
+  font-weight: 500;
+}
+
+.standings-list a:hover {
+  text-decoration: underline;
+}
+
+.back-link {
+  margin-top: 20px;
+  display: inline-block;
+  color: #666;
+}

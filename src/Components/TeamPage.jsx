@@ -14,6 +14,9 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { getNbaPlayersByTeam, getEplPlayersByTeam, getNflPlayersByTeam, getNbaTeams, getEplTeams, getNflTeams } from "../api";
 import "./TeamPage.css";
+import nflLogo from "../assets/nfl-logo.png";
+import nbaLogo from "../assets/nba-logo.png";
+import premLogo from "../assets/prem-logo.png";
 
 function TeamPage() {
   const { sport, teamName } = useParams();
@@ -63,15 +66,23 @@ function TeamPage() {
   if (!players.length) return <div>No players found for this team.</div>;
 
   return (
-    <div className="team-page">
-      <div className="team-header">
-        {teamLogo && <img src={teamLogo} alt={`${teamName} Logo`} className="team-logo" />}
-        <h1>{teamName}</h1>
-      </div>
+    <div className="team-container">
+      <div className="team-box">
+        <div className="league-header">
+          {sport === "NBA" && <img src={nbaLogo} alt="NBA Logo" className="league-logo" />}
+          {sport === "NFL" && <img src={nflLogo} alt="NFL Logo" className="league-logo" />}
+          {sport === "Premier League" && <img src={premLogo} alt="Premier League Logo" className="league-logo" />}
+          <h2 className="league-name">{sport}</h2>
+        </div>
 
-      <Link to="/" className="back-link">← Back to Home</Link>
-      
-      <div className="player-list">
+        <div className="team-header">
+          {teamLogo && <img src={teamLogo} alt={`${teamName} Logo`} className="team-logo" />}
+          <h1>{teamName}</h1>
+        </div>
+
+        <Link to="/" className="back-link">← Back to Home</Link>
+        
+        <div className="player-list">
         {players.map(player => (
           <Link to={`/player/${player.id}`} key={player.id} className="player-card">
             {sport === "NBA" && (
@@ -91,6 +102,7 @@ function TeamPage() {
             )}
           </Link>
         ))}
+        </div>
       </div>
     </div>
   );
