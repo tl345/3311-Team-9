@@ -1,19 +1,28 @@
 .standings-box {
   text-align: center;
-  width: 80%;
+  width: 90%;
   max-width: 600px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
+  padding: 20px;
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: #333;
   border: 1px solid #e0e0e0;
-  margin: 40px auto;
+  margin: 20px auto;
+}
+
+@media (min-width: 768px) {
+  .standings-box {
+    width: 80%;
+    padding: 40px;
+    font-size: 1.4rem;
+    margin: 40px auto;
+  }
 }
 
 .standings-box:hover {
@@ -22,9 +31,16 @@
 }
 
 .standings-title {
-  font-size: 2rem;
-  margin-bottom: 30px;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
   color: #333;
+}
+
+@media (min-width: 768px) {
+  .standings-title {
+    font-size: 2rem;
+    margin-bottom: 30px;
+  }
 }
 
 .standings-list {
@@ -34,12 +50,20 @@
 }
 
 .standings-list li {
-  margin: 15px 0;
-  padding: 12px;
+  margin: 10px 0;
+  padding: 8px;
   border-bottom: 1px solid #eee;
   display: flex;
   align-items: center;
-  font-size: 1.3rem;
+  font-size: 1rem;
+}
+
+@media (min-width: 768px) {
+  .standings-list li {
+    margin: 15px 0;
+    padding: 12px;
+    font-size: 1.3rem;
+  }
 }
 
 .standings-list a {
