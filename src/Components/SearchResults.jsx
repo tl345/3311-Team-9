@@ -15,10 +15,17 @@ function SearchResults() {
 
     const fetchResults = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/search?q=${query}`);
+        console.log("Searching for:", query);
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? `http://localhost:5000/api/search?q=${query}`
+          : `/api/search?q=${query}`;
+        
+        const res = await axios.get(apiUrl);
+        console.log("Search results:", res.data);
         setResults(res.data);
       } catch (err) {
         console.error("Search failed:", err);
+        console.log("Error details:", err.response);
       } finally {
         setLoading(false);
       }
@@ -28,7 +35,14 @@ function SearchResults() {
   }, [query]);
 
   if (loading) return <p>Loading search results...</p>;
-  if (!results.players.length && !results.teams.length) return <p>No results found.</p>;
+  if (!results.players.length && !results.teams.length) {
+    return (
+      <div className="search-results-box no-results">
+        <h2>Search Results for "{query}"</h2>
+        <p className="no-results-message">No results found for your search.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="search-results-box">
