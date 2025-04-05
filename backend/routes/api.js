@@ -176,9 +176,29 @@ router.get('/top-players/:league', async (req, res) => {
       // Get players by league with appropriate sorting
       if (league === 'NBA') {
         // NBA players sorted by points (high to low)
-        players = await Player.find({ league })
-          .sort({ 'stats.sportStats.points': -1 })
-          .limit(10);
+        // players = await Player.find({ league })
+        //   .sort({ 'stats.sportStats.points': -1 })
+        //   .limit(10);
+
+        // Get ALL NBA players with at least one game played
+        players = await Player.find({ 
+          league,
+          'stats.gamesPlayed': { $gt: 0 } 
+        });
+        
+        // Sort them all by PPG
+        players.sort((a, b) => {
+          const aPoints = a.stats.sportStats.get('points') || 0;
+          const bPoints = b.stats.sportStats.get('points') || 0;
+          
+          const aPPG = a.stats.gamesPlayed ? aPoints / a.stats.gamesPlayed : 0;
+          const bPPG = b.stats.gamesPlayed ? bPoints / b.stats.gamesPlayed : 0;
+          
+          return bPPG - aPPG; // Higher PPG first
+        });
+        
+        // Take top 10 from ALL players
+        players = players.slice(0, 10);
       } 
       else if (league === 'EPL') {
         // EPL players sorted by goals (high to low)

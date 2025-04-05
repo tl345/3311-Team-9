@@ -67,6 +67,8 @@ async function updateFromApiFootball() {
       headers: { 'x-apisports-key': process.env.EPL_API_KEY },
       params: { league: 39, season: CURRENT_SEASON },
     });
+
+    console.log('API Response:', JSON.stringify(response.data, null, 2));
     
     // Log response structure to help diagnose issues
     //console.log(`EPL standings API response status: ${response.status}`);
@@ -202,8 +204,14 @@ async function updateFromApiFootball() {
   } catch (error) {
     console.error('API-Football update error:', error.message);
     if (error.response) {
-      console.error(`Status: ${error.response.status}`);
-      console.error('Response data:', error.response.data);
+      console.error(`Status code: ${error.response.status}`);
+      console.error('Headers:', error.response.headers);
+      console.error('Response data:', JSON.stringify(error.response.data, null, 2));
+    } else if (error.request) {
+      console.error('Request was made but no response received');
+      console.error(error.request);
+    } else {
+      console.error('Error config:', error.config);
     }
     return false;
   }
