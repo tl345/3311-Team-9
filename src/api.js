@@ -10,8 +10,10 @@
  */
 import axios from 'axios';
 
-// Backend API base URL (will need to change this when deploying to production)
-const BACKEND_API_URL = 'http://localhost:5000/api';
+// Backend API base URL - automatically handles dev vs production
+const BACKEND_API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : '/api';
 
 // ---------------- NBA ---------------- //
 /**

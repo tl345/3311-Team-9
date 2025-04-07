@@ -26,8 +26,13 @@ connectDB();
 // ✅ Initialize Express application
 const app = express();
 
-// ✅ Configure middleware
-app.use(cors()); // Enable Cross-Origin Resource Sharing for frontend access
+// ✅ Configure middleware with explicit CORS settings
+app.use(cors({
+  origin: '*', // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json()); // Parse incoming JSON payloads in request bodies
 
 // ✅ Register API routes (all endpoints under /api prefix)
