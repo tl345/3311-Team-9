@@ -13,7 +13,8 @@ import axios from 'axios';
 // Backend API base URL - automatically handles dev vs production
 const BACKEND_API_URL = window.location.hostname === 'localhost' 
   ? 'http://localhost:5000/api'
-  : '/api';
+  : 'https://three311-team-9.onrender.com';
+
 
 // ---------------- NBA ---------------- //
 /**

@@ -17,36 +17,35 @@ import connectDB from './config/db.js';
 import apiRoutes from './routes/api.js';
 import { updateSportsData } from './services/updateService.js';
 
-// ✅ Load environment variables from .env file (remove redundant require)
+// ✅ Load environment variables from .env file
 dotenv.config();
 
-// ✅ Connect to MongoDB database
-connectDB();
-
-// ✅ Initialize Express application
+// ✅ Initialize Express application (must come BEFORE using `app`)
 const app = express();
 
-// ✅ Configure middleware with explicit CORS settings
+// ✅ Configure CORS before routes
 app.use(cors({
-  origin: '*', // Allow all origins
+  origin: ['http://localhost:5173', 'https://3311-team-9-thiens-projects-c76e5f98.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-app.use(express.json()); // Parse incoming JSON payloads in request bodies
 
-// ✅ Register API routes (all endpoints under /api prefix)
+// ✅ JSON body parser middleware
+app.use(express.json());
+
+// ✅ Connect to MongoDB database
+connectDB();
+
+// ✅ Register API routes
 app.use('/api', apiRoutes);
 
-// ✅ Health check endpoint to verify the server is running
+// ✅ Health check endpoint
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
 
-/**
- * ✅ Manual data update endpoint
- * Triggers immediate data refresh from all sports APIs
- */
+// ✅ Manual data update endpoint
 app.post('/api/update', async (req, res) => {
   try {
     const result = await updateSportsData();
@@ -65,6 +64,6 @@ app.post('/api/update', async (req, res) => {
   }
 });
 
-// ✅ Start server on specified port from environment or default to 5000
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
