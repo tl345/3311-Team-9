@@ -27,6 +27,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getPlayerDetails } from '../api';
+import NBAScatterChart from './NBAScatterChart';
 import './PlayerPage.css';
 
 function PlayerPage() {
@@ -93,14 +94,25 @@ function PlayerPage() {
 
       {/* Sport-specific Stats */}
       {player.league === 'NBA' && (
-        <div className="nba-stats">
-          <h3>NBA Stats</h3>
-          <p><strong>Points:</strong> {player.points || 0}</p>
-          <p><strong>Assists:</strong> {player.assists || 0}</p>
-          <p><strong>Rebounds:</strong> {player.rebounds || 0}</p>
-          <p><strong>Blocks:</strong> {player.blocks || 0}</p>
-          <p><strong>Steals:</strong> {player.steals || 0}</p>
-        </div>
+        <>
+          <div className="nba-stats">
+            <h3>NBA Stats</h3>
+            <p><strong>Points Per Game:</strong> {player.stats?.sportStats?.points || "0"}</p>
+            <p><strong>Assists Per Game:</strong> {player.stats?.sportStats?.assists || "0"}</p>
+            <p><strong>Rebounds Per Game:</strong> {player.stats?.sportStats?.rebounds || "0"}</p>
+            <p><strong>Blocks Per Game:</strong> {player.stats?.sportStats?.blocks || "0"}</p>
+            <p><strong>Steals Per Game:</strong> {player.stats?.sportStats?.steals || "0"}</p>
+            <p><strong>Games Played:</strong> {player.stats?.gamesPlayed || "0"}</p>
+          </div>
+          
+          {/* Add the scatter plot for NBA players */}
+          <div className="player-scatter-chart">
+            <NBAScatterChart 
+              playerId={player.nbaStatsRef || id.replace('nba_', '')} 
+              compact={true} 
+            />
+          </div>
+        </>
       )}
 
       {player.league === 'NFL' && (
