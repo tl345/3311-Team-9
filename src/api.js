@@ -61,9 +61,17 @@ export const getNbaPlayersByTeam = async (teamName) => {
     try {
       // Find the team ID first
       const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/NBA`);
-      const team = teamsRes.data.find(t => 
-        t.displayName.toLowerCase().includes(teamName.toLowerCase())
-      );
+    // More flexible team name matching
+    const team = teamsRes.data.find(t => {
+      const displayName = t.displayName.toLowerCase();
+      const searchName = teamName.toLowerCase();
+      
+      // Match exact name or common variations
+      return displayName.includes(searchName) || 
+             searchName.includes(displayName) ||
+             displayName.replace(' fc', '').includes(searchName) ||
+             searchName.replace(' fc', '').includes(displayName);
+    });
       
       if (!team) return [];
       
@@ -195,18 +203,45 @@ export const getEplPlayersByTeam = async (teamName) => {
     const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
     console.log("Teams response:", teamsRes.data);
 
-    const team = teamsRes.data.find(t => 
-      t.displayName.toLowerCase().includes(teamName.toLowerCase())
-    );
+    // Comprehensive team name matching
+    const team = teamsRes.data.find(t => {
+      const displayName = t.displayName.toLowerCase();
+      const baseName = t.name.toLowerCase();
+      const searchName = teamName.toLowerCase();
+      
+      console.log(`Matching team: ${displayName} (${baseName}) against ${searchName}`);
+      
+      // Match against both display name and base name
+      return displayName === searchName ||
+             baseName === searchName ||
+             displayName.includes(searchName) || 
+             baseName.includes(searchName) ||
+             searchName.includes(displayName) ||
+             searchName.includes(baseName) ||
+             displayName.replace(/ fc$/, '') === searchName ||
+             baseName.replace(/ fc$/, '') === searchName;
+    });
 
     if (!team) {
-      console.warn(`Team not found: ${teamName}`);
+      console.warn(`No team found matching: ${teamName}`);
+      console.log('Available teams:', teamsRes.data.map(t => `${t.name} (${t.displayName})`));
       return [];
     }
+    
+    console.log("Matched team:", {
+      id: team.teamId,
+      name: team.name,
+      displayName: team.displayName
+    });
 
-    // Fetch players from the found team
-    const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
-    console.log("Players response:", res.data.players);
+    // Fetch players from the found team using full team ID
+    const teamId = `epl_${team.teamId}`;
+    console.log(`Fetching players for team ID: ${teamId}`);
+    const res = await axios.get(`${BACKEND_API_URL}/team/${teamId}`);
+    console.log("Players response:", {
+      status: res.status,
+      data: res.data
+    });
 
     return res.data.players.map(player => ({
       id: player.playerId,

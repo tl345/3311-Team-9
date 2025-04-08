@@ -33,24 +33,32 @@ function SportsSection() {
    */
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        // Fetch top players from each league
-        const nbaPlayers = await getNbaPlayers();
-        setNbaTopPlayers(nbaPlayers);
-        
-        const nflPlayers = await getNflPlayers();
-        setNflTopPlayers(nflPlayers);
-        
-        const eplPlayers = await getEplPlayers();
-        setEplTopPlayers(eplPlayers);
+        try {
+          // Fetch top players from each league with debug logging
+          console.log("Fetching NBA players...");
+          const nbaPlayers = await getNbaPlayers();
+          console.log("NBA players response:", nbaPlayers);
+          setNbaTopPlayers(nbaPlayers);
+          
+          console.log("Fetching NFL players...");
+          const nflPlayers = await getNflPlayers();
+          console.log("NFL players response:", nflPlayers);
+          setNflTopPlayers(nflPlayers);
+          
+          console.log("Fetching EPL players...");
+          const eplPlayers = await getEplPlayers();
+          console.log("EPL players response:", eplPlayers);
+          setEplTopPlayers(eplPlayers);
 
-        const updateTime = await getLastUpdateTime();
-        setLastUpdateTime(updateTime);
-      } catch (error) {
-        console.error("Error fetching sports data:", error);
-      } finally {
-        setLoading(false);
-      }
+          console.log("Fetching last update time...");
+          const updateTime = await getLastUpdateTime();
+          console.log("Last update time:", updateTime);
+          setLastUpdateTime(updateTime);
+        } catch (error) {
+          console.error("Error fetching sports data:", error);
+        } finally {
+          setLoading(false);
+        }
     };
 
     fetchData();

@@ -67,7 +67,7 @@ function SearchResults() {
           <ul>
             {results.teams.map((team) => (
               <li key={team._id}>
-                <Link to={`/team/${team.league}/${encodeURIComponent(team.name)}`}>
+                <Link to={`/team/${team.league}/${encodeURIComponent(team.displayName)}`}>
                   {team.displayName}
                 </Link>
               </li>

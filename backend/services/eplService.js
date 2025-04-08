@@ -87,8 +87,8 @@ async function updateFromApiFootball() {
         { teamId: `epl_${team.id}` },
         {
           league: 'EPL',
-          name: team.name,
-          displayName: team.name,
+          name: team.name.replace(/ FC$/, ''), // Store base name without "FC"
+          displayName: team.name, // Keep original for display
           logo: team.logo,
           standings: {
             rank: teamData.rank, // Position in standings

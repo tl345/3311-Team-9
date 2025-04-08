@@ -47,10 +47,23 @@ function TeamPage() {
 
         setPlayers(fetchedPlayers);
 
-        // ✅ Find the team logo
-        const teamData = fetchedTeams.find(team => team.name.toLowerCase() === teamName.toLowerCase());
+        // ✅ Find the team logo using flexible name matching
+        const teamData = fetchedTeams.find(team => {
+          const displayName = team.name.toLowerCase();
+          const searchName = teamName.toLowerCase();
+          
+          // Match exact name or common variations
+          return displayName.includes(searchName) || 
+                 searchName.includes(displayName) ||
+                 displayName.replace(' fc', '').includes(searchName) ||
+                 searchName.replace(' fc', '').includes(displayName);
+        });
+
+        console.log("Team data found:", teamData); // Debug log
         if (teamData && teamData.logo) {
           setTeamLogo(teamData.logo);
+        } else {
+          console.warn("No team logo found for:", teamName);
         }
       } catch (error) {
         console.error(`Failed to fetch players for ${teamName}:`, error);
