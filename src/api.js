@@ -281,6 +281,7 @@ export const getPlayerDetails = async (playerId) => {
         height: player.height || "N/A",
         weight: player.weight || "N/A",
         appearances: player.stats?.gamesPlayed || "N/A",
+        stats: player.stats
       };
       
       // Add sport-specific stats based on league
@@ -295,11 +296,12 @@ export const getPlayerDetails = async (playerId) => {
       } else if (player.league === 'NBA') {
         return {
           ...playerDetails,
-          points: player.stats?.sportStats?.points || 0,
-          assists: player.stats?.sportStats?.assists || 0,
-          rebounds: player.stats?.sportStats?.rebounds || 0,
-          blocks: player.stats?.sportStats?.blocks || 0,
-          steals: player.stats?.sportStats?.steals || 0
+          // The player.stats.sportStats fields are now strings, not numbers
+          points: parseFloat(player.stats?.sportStats?.points || 0),
+          assists: parseFloat(player.stats?.sportStats?.assists || 0),
+          rebounds: parseFloat(player.stats?.sportStats?.rebounds || 0),
+          blocks: parseFloat(player.stats?.sportStats?.blocks || 0),
+          steals: parseFloat(player.stats?.sportStats?.steals || 0)
         };
       } else {
         // NFL stats
@@ -313,6 +315,49 @@ export const getPlayerDetails = async (playerId) => {
       console.error(`Player Details Error (ID: ${playerId}):`, error);
       return null;
     }
+};
+
+/**
+ * Fetches detailed NBA statistics for a player
+ * @param {string} playerId - Player ID (without nba_ prefix)
+ * @returns {Promise<Object>} Detailed player statistics
+ */
+export const getNbaPlayerStats = async (playerId) => {
+  try {
+    // Remove 'nba_' prefix if it exists
+    const id = playerId.startsWith('nba_') ? playerId.substring(4) : playerId;
+    const response = await axios.get(`${BACKEND_API_URL}/nba-stats/player/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching NBA player stats:', error);
+    return null;
+  }
+};
+
+/**
+ * Fetches visualization data for efficiency-usage scatter plot
+ * 
+ * This function retrieves processed data for the NBA player visualization:
+ * - Gets filtered player data based on minimum games threshold
+ * - Supports both regular season and playoff views
+ * - Handles parameter validation and error states
+ * 
+ * The returned data powers the interactive scatter plot showing
+ * True Shooting % vs Usage Rate with PER as bubble size
+ * @param {number} season - Season year to visualize
+ * @param {string} type - 'regular' or 'playoff'
+ * @param {number} minGames - Minimum games played to be included
+ * @returns {Promise<Array>} Formatted data for the scatter plot
+ */
+export const getEfficiencyUsageData = async (season = 2025, type = 'regular', minGames = 20) => {
+  try {
+    const url = `${BACKEND_API_URL}/nba-stats/visualization/efficiency-usage?season=${season}&type=${type}&minGames=${minGames}`;
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching efficiency vs usage data:', error);
+    return [];
+  }
 };
 
 /**

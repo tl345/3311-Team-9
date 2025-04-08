@@ -1,0 +1,176 @@
+/**
+ * Styling for the NBA Efficiency vs Usage Scatter Plot
+ * 
+ * This stylesheet provides:
+ * - Responsive layout for different screen sizes
+ * - Visual styling for chart elements (tooltips, highlights)
+ * - Layout for the explanatory sections
+ * - Different styling modes (compact vs full)
+ * - State-specific styles (loading, error, no data)
+ */
+
+.scatter-chart-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 20px 0;
+  }
+  
+  .scatter-chart-container h2 {
+    text-align: center;
+    color: #333;
+    margin-top: 0;
+  }
+  
+  .chart-subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  
+  .chart-area {
+    margin: 20px 0;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 6px;
+  }
+
+  .compact-explanation {
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #f0f8ff;
+    border-left: 3px solid #1f77b4;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .compact-explanation p {
+    margin: 0;
+    color: #333;
+  }
+  
+  .compact-explanation strong {
+    color: #1f77b4;
+  }
+  
+  .player-details {
+    background-color: #f0f8ff;
+    border-left: 4px solid #1f77b4;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    position: relative;
+  }
+  
+  .player-details h3 {
+    margin-top: 0;
+    color: #1f77b4;
+  }
+  
+  .player-details p {
+    margin: 8px 0;
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #d9534f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .close-button:hover {
+    background-color: #c9302c;
+  }
+  
+  .custom-tooltip {
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+  
+  .tooltip-name {
+    font-weight: bold;
+    margin: 0 0 5px 0;
+  }
+  
+  .tooltip-team, .tooltip-position {
+    margin: 3px 0;
+    color: #555;
+  }
+  
+  .tooltip-stat {
+    margin: 3px 0;
+  }
+  
+  .chart-explanation {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+  }
+  
+  .chart-explanation h3 {
+    text-align: center;
+    color: #333;
+    margin-top: 0;
+  }
+  
+  .chart-quadrants {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+  }
+  
+  .quadrant {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .quadrant h4 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .quadrant p {
+    color: #666;
+    margin-bottom: 0;
+  }
+  
+  .loading-container, .error-container, .no-data-container {
+    padding: 30px;
+    text-align: center;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    margin: 20px 0;
+  }
+  
+  .error-container {
+    color: #d9534f;
+    border-left: 4px solid #d9534f;
+  }
+
+  .compact-chart {
+    padding: 10px;
+    margin: 10px 0;
+  }
+  
+  .compact-chart h2 {
+    font-size: 1.5rem;
+  }
+  
+  .compact-chart .chart-subtitle {
+    font-size: 0.9rem;
+  }

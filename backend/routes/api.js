@@ -18,8 +18,10 @@
 import express from 'express';
 import Team from '../models/Team.js';
 import Player from '../models/Player.js';
-import { updateSportsData } from '../services/updateService.js';
+import NbaPlayerStats from '../models/NBAPlayerStats.js';
+import { updateSportsData, updateNbaDataOnly } from '../services/updateService.js';
 import { updateNBATeam } from '../services/nbaService.js';
+import config from '../config/nbaStatsConfig.js';
 import SystemInfo from '../models/SystemInfo.js';
 
 const router = express.Router();
@@ -89,33 +91,194 @@ router.get('/team/:teamId', async (req, res) => {
 
 /**
  * GET /api/player/:playerId
- * Fetches detailed information for a specific player
+ * Enhanced Player Details Endpoint
  * 
- * This endpoint:
- * 1. Looks up the player by their unique ID
- * 2. Converts Mongoose Maps to regular objects for JSON serialization
- * @param {string} req.params.playerId - Player ID (e.g., "nba_jamesle01")
- * @returns {Object} Player details including stats
+ * This updated endpoint implements the normalized database access pattern:
+ * - First fetches the basic player record
+ * - For NBA players, follows the reference to detailed NbaPlayerStats
+ * - Calculates per-game statistics from the totals data
+ * - Returns properly formatted statistics for the frontend
+ * @param {string} req.params.playerId - Player's unique ID (e.g., "nba_jamesle01")
+ * @returns {Object} Player details including statistics
  */
 router.get('/player/:playerId', async (req, res) => {
-    try {
-      const player = await Player.findOne({ playerId: req.params.playerId });
+  try {
+    const player = await Player.findOne({ playerId: req.params.playerId });
+    if (!player) return res.status(404).json({ message: 'Player not found' });
+    
+    console.log(`Found player ${player.name} with nbaStatsRef: ${player.nbaStatsRef}`);
+    
+    // Convert the player to a plain object
+    const playerObj = player.toObject();
+    
+    // For NBA players, get stats from NbaPlayerStats collection using the reference
+    if (player.league === 'NBA' && player.nbaStatsRef) {
+      const nbaStats = await NbaPlayerStats.findOne({ playerId: player.nbaStatsRef });
+      
+      console.log(`NBA Stats found: ${Boolean(nbaStats)}, regularSeasons: ${nbaStats ? nbaStats.regularSeasons.length : 0}`);
+      
+      if (nbaStats) {
+        // Get most recent regular season
+        const regularSeasons = nbaStats.regularSeasons;
+        if (regularSeasons.length > 0) {
+          // Sort by season descending
+          regularSeasons.sort((a, b) => b.season - a.season);
+          const currentSeason = regularSeasons[0];
+          
+          console.log(`Current season totals: points=${currentSeason.totals.points}, games=${currentSeason.totals.games}`);
+          
+          // Add derived stats to maintain API compatibility
+          playerObj.stats = {
+            gamesPlayed: currentSeason.totals.games || 0,
+            gamesStarted: currentSeason.totals.gamesStarted || 0,
+            sportStats: {}
+          };
 
-      if (!player) return res.status(404).json({ message: 'Player not found' });
-      
-      // Convert the player to a plain object
-      const playerObj = player.toObject();
-      
-      // Convert the Map to a regular object for proper JSON serialization
-      if (playerObj.stats && playerObj.stats.sportStats) {
-        playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
+          // Only add stats if there are games played (avoid division by zero)
+          if (currentSeason.totals.games > 0) {
+            playerObj.stats.sportStats = {
+              points: (currentSeason.totals.points / currentSeason.totals.games).toFixed(1),
+              rebounds: (currentSeason.totals.totalRb / currentSeason.totals.games).toFixed(1),
+              assists: (currentSeason.totals.assists / currentSeason.totals.games).toFixed(1),
+              blocks: (currentSeason.totals.blocks / currentSeason.totals.games).toFixed(1),
+              steals: (currentSeason.totals.steals / currentSeason.totals.games).toFixed(1)
+            };
+          }
+        }
       }
-      
-      res.json(playerObj);
-    } catch (error) {
-      console.error('Error fetching player:', error);
-      res.status(500).json({ message: error.message });
+    } else if (playerObj.stats && playerObj.stats.sportStats) {
+      // For non-NBA players, convert Map to object as before
+      playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
     }
+    
+    res.json(playerObj);
+  } catch (error) {
+    console.error('Error fetching player:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * GET /api/nba-stats/player/:playerId
+ * Fetches comprehensive NBA statistics for a specific player
+ * Includes both regular season and playoff data across seasons
+ * @param {string} req.params.playerId - Player's unique ID (without the "nba_" prefix)
+ * @returns {Object} Player's comprehensive stats
+ */
+router.get('/nba-stats/player/:playerId', async (req, res) => {
+  try {
+    const playerId = req.params.playerId;
+    
+    // Find the player's stats document
+    const playerStats = await NbaPlayerStats.findOne({ playerId });
+
+    if (!playerStats) {
+      return res.status(404).json({ message: 'Player statistics not found' });
+    }
+    
+    res.json(playerStats);
+  } catch (error) {
+    console.error('Error fetching player NBA stats:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+* GET /api/nba-stats/player/:playerId/season/:season
+* Fetches specific season NBA statistics for a player
+* @param {string} req.params.playerId - Player's unique ID
+* @param {number} req.params.season - Season year
+* @param {string} req.query.type - Optional type ('regular' or 'playoff')
+* @returns {Object} Player's season statistics
+*/
+router.get('/nba-stats/player/:playerId/season/:season', async (req, res) => {
+  try {
+    const playerId = req.params.playerId;
+    const season = parseInt(req.params.season, 10);
+    const type = req.query.type?.toLowerCase() === 'playoff' ? 'playoffs' : 'regularSeasons';
+    
+    // Find the player's stats document
+    const playerStats = await NbaPlayerStats.findOne({ playerId });
+
+    if (!playerStats) {
+      return res.status(404).json({ message: 'Player statistics not found' });
+    }
+    
+    // Find the specific season within the array
+    const seasonStats = playerStats[type].find(s => s.season === season);
+    
+    if (!seasonStats) {
+      return res.status(404).json({ message: `No ${type === 'playoffs' ? 'playoff' : 'regular season'} statistics found for season ${season}` });
+    }
+    
+    res.json(seasonStats);
+  } catch (error) {
+    console.error('Error fetching player season NBA stats:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * GET /api/nba-stats/visualization/efficiency-usage
+ * Efficiency-Usage Scatter Plot Visualization Endpoint
+ * 
+ * This endpoint processes NBA player data for visualization:
+ * - Filters players by minimum games played threshold
+ * - Extracts key metrics: True Shooting %, Usage Rate, PER
+ * - Returns formatted data ready for the scatter plot
+ * - Supports both regular season and playoff data views
+ * 
+ * @param {number} req.query.season - Season year
+ * @param {string} req.query.type - Optional type ('regular' or 'playoff')
+ * @param {number} req.query.minGames - Minimum games played threshold to include player
+ * @returns {Array} Data for the scatter plot
+ */
+router.get('/nba-stats/visualization/efficiency-usage', async (req, res) => {
+  try {
+    // Get parameters with defaults from configuration
+    const season = parseInt(req.query.season || config.currentSeason, 10);
+    const type = req.query.type?.toLowerCase() === 'playoff' ? 'playoffs' : 'regularSeasons';
+    const minGames = parseInt(req.query.minGames || 20, 10);
+    
+    // Find players with stats for the requested season (using MongoDBs dot notation for nested arrays)
+    const players = await NbaPlayerStats.find({
+      [`${type}.season`]: season
+    });
+    
+    if (!players || players.length === 0) {
+      return res.json([]);
+    }
+    
+    // Extract and format the data for the scatter plot
+    const scatterData = players
+      .map(player => {
+        // Find the specific season within the player's seasons array
+        const seasonStats = player[type].find(s => s.season === season);
+        // Skip if no stats or misisng advanced stats
+        if (!seasonStats || !seasonStats.advanced) return null;
+        
+        // Only include players who played enough games
+        if (seasonStats.advanced.games < minGames) return null;
+        
+        // Fields needed for the visualization
+        return {
+          playerId: player.playerId,
+          name: player.name,
+          team: seasonStats.team,
+          position: seasonStats.position,
+          tsPercent: seasonStats.advanced.tsPercent, // True Shooting %
+          usagePercent: seasonStats.advanced.usagePercent, // Usage Rate
+          per: seasonStats.advanced.per, // Player Efficiency Rating
+          games: seasonStats.advanced.games // Games played (for filtering)
+        };
+      })
+      .filter(item => item !== null); // Remove null entries
+    
+    res.json(scatterData);
+  } catch (error) {
+    console.error('Error fetching efficiency vs usage data:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 /**
@@ -175,11 +338,6 @@ router.get('/top-players/:league', async (req, res) => {
       
       // Get players by league with appropriate sorting
       if (league === 'NBA') {
-        // NBA players sorted by points (high to low)
-        // players = await Player.find({ league })
-        //   .sort({ 'stats.sportStats.points': -1 })
-        //   .limit(10);
-
         // Get ALL NBA players with at least one game played
         players = await Player.find({ 
           league,
@@ -299,15 +457,39 @@ router.get('/last-update', async (req, res) => {
 
 /**
  * POST /api/update
- * Manually triggers a full data refresh from all sports APIs
+ * Manually triggers a data refresh from external APIs with configurable options
+ * 
+ * @param {Object} req.body - Update options
+ * @param {boolean} req.body.nba - Whether to update NBA data (default: true)
+ * @param {boolean} req.body.nfl - Whether to update NFL data (default: true)
+ * @param {boolean} req.body.epl - Whether to update EPL data (default: true)
+ * @param {string} req.body.nbaType - 'regular' or 'playoff' (default: 'regular')
+ * @param {number} req.body.nbaSeason - Season year to update (default: from config)
  * @returns {Object} Update results and status
  */
 router.post('/update', async (req, res) => {
     try {
-      const result = await updateSportsData();
+      // Extract options from request body with defaults
+      const options = {
+        nba: req.body.nba !== false, // Default to true unless explicitly set false
+        nfl: req.body.nfl !== false, //
+        epl: req.body.epl !== false, //
+        nbaType: req.body.nbaType || 'regular',
+        nbaSeason: parseInt(req.body.nbaSeason || config.currentSeason, 10)
+      };
+      
+      // Validate nbaType parameter
+      if (!['regular', 'playoff'].includes(options.nbaType)) {
+        options.nbaType = 'regular';
+      }
+
+      // Pass all options to updateSportsData function
+      const result = await updateSportsData(options);
+
       res.json({
         success: true,
         message: 'Sports data updated successfully',
+        options, // Return the options used
         result
       });
     } catch (error) {

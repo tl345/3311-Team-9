@@ -84,3 +84,37 @@
 .back-link:hover {
   text-decoration: underline;
 }
+
+/* Styling for the scatter chart section */
+.player-scatter-chart {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.player-scatter-chart h3 {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* For larger screens, display stats side by side with chart */
+@media (min-width: 1200px) {
+  .nba-stats-layout {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+    align-items: start;
+  }
+  
+  .nba-stats {
+    padding-right: 20px;
+    border-right: 1px solid #eee;
+  }
+  
+  .player-scatter-chart {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+  }
+}

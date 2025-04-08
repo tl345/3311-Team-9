@@ -1,12 +1,8 @@
 /**
  * Player Model
  * 
- * This schema defines the structure for player data across all supported sports:
- * - NBA: Basketball players with points, assists, rebounds, etc.
- * - NFL: Football players with touchdowns, yards, etc.
- * - EPL: Soccer players with goals, assists, etc.
- * 
- * The model uses a flexible schema with sport-specific statistics stored in a Map to handle different stat types across sports
+ * This schema defines the structure for player data across all supported sports.
+ * For NBA players, it uses a reference to the NbaPlayerStats collection rather than duplicating stats.
  */
 import mongoose from 'mongoose';
 
@@ -38,6 +34,23 @@ const PlayerSchema = new mongoose.Schema({
   height: String,
   weight: String,
   image: String,
+
+  /**
+   * Reference to the detailed player stats in the NbaPlayerStats collection
+   * This implements a normalized database design pattern:
+   * - Player collection stores basic info and summary statistics
+   * - NbaPlayerStats collection stores detailed season-by-season data
+   * - This reference field connects the two collections
+   * 
+   * Contains the raw ID without the "nba_" prefix to match the NbaPlayerStats.playerId
+   */
+  nbaStatsRef: {
+    type: String,
+    ref: 'NbaPlayerStats'
+  },
+
+  // Stats structure same as before for NFL/EPL players
+  // For NBA players, this will be populated with a reference to NbaPlayerStats
   stats: {
     gamesPlayed: Number,
     gamesStarted: Number,
