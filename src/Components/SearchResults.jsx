@@ -35,10 +35,10 @@ function SearchResults() {
   }, [query]);
 
   if (loading) return <p>Loading search results...</p>;
+
   if (!results.players.length && !results.teams.length) {
     return (
       <div className="search-results-box no-results">
-        <h2>Search Results for "{query}"</h2>
         <p className="no-results-message">No results found for your search.</p>
       </div>
     );
@@ -46,8 +46,6 @@ function SearchResults() {
 
   return (
     <div className="search-results-box">
-      <h2>Search Results for "{query}"</h2>
-
       {results.players.length > 0 && (
         <>
           <h3>Players</h3>
