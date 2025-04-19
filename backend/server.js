@@ -24,8 +24,13 @@ dotenv.config();
 const app = express();
 
 // ✅ Configure CORS before routes
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:5173',
+  'https://3311-team-9-thiens-projects-c76e5f98.vercel.app'
+];
+
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://3311-team-9-thiens-projects-c76e5f98.vercel.app'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
