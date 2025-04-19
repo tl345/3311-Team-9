@@ -9,7 +9,9 @@
     {
       "src": "package.json",
       "use": "@vercel/static-build",
-      "config": {}
+      "config": {
+        "distDir": "dist"
+      }
     }
   ],
   "routes": [
