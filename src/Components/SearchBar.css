@@ -1,0 +1,38 @@
+.search-bar-wrapper {
+    position: relative;
+    width: 300px;
+  }
+  
+  .suggestion-box {
+    position: absolute;
+    top: 100%;
+    width: 100%;
+    background: rgb(255, 255, 255);
+    border: 1px solid #ccc;
+    border-top: none;
+    z-index: 999;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .suggestion-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #000;
+  }
+  
+  .suggestion-item:hover {
+    background-color: #f0f0ff;
+  }
+  
+  .suggestion-header {
+    padding: 8px 12px;
+    font-weight: bold;
+    background: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+    color: #333;
+  }
+  
