@@ -1,8 +1,6 @@
 /**
- * Player Model
- * 
- * This schema defines the structure for player data across all supported sports.
- * For NBA players, it uses a reference to the NbaPlayerStats collection rather than duplicating stats.
+ * Player Model - Core player information shared across sports
+ * Now uses references to specialized stat collections for detailed data
  */
 import mongoose from 'mongoose';
 
@@ -21,6 +19,8 @@ const PlayerSchema = new mongoose.Schema({
     required: true, 
     enum: ['NBA', 'NFL', 'EPL'] 
   },
+
+  // Player core information
   name: { 
     type: String, 
     required: true 
@@ -35,18 +35,24 @@ const PlayerSchema = new mongoose.Schema({
   weight: String,
   image: String,
 
-  /**
-   * Reference to the detailed player stats in the NbaPlayerStats collection
-   * This implements a normalized database design pattern:
-   * - Player collection stores basic info and summary statistics
-   * - NbaPlayerStats collection stores detailed season-by-season data
-   * - This reference field connects the two collections
-   * 
-   * Contains the raw ID without the "nba_" prefix to match the NbaPlayerStats.playerId
+ /**
+   * Reference to the detailed NBA player stats collection
+   * Implements normalized database design pattern by connecting to NbaPlayerStats
+   * Contains the raw ID without the "nba_" prefix
    */
   nbaStatsRef: {
     type: String,
     ref: 'NbaPlayerStats'
+  },
+
+  /**
+   * Reference to the detailed EPL player stats collection
+   * Implements normalized database design pattern by connecting to EPLPlayerStats
+   * Contains the raw ID without the "epl_" prefix
+   */
+  eplStatsRef: {
+    type: String,
+    ref: 'EPLPlayerStats'
   },
 
   // Stats structure same as before for NFL/EPL players
@@ -56,10 +62,7 @@ const PlayerSchema = new mongoose.Schema({
     gamesStarted: Number,
     
     // Sport-specific statistics as key-value pairs
-    // Examples:
-    // NBA: points, rebounds, assists, blocks, steals
-    // NFL: touchdowns, yards, completions
-    // EPL: goals, assists, cleanSheets, yellowCards
+    // Different stats for different sports (points, goals, tackles, etc.)
     sportStats: { 
       type: Map, 
       of: mongoose.Schema.Types.Mixed // Allows any data type for stat values

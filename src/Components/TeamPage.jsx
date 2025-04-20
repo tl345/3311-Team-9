@@ -9,23 +9,30 @@
  * 
  * The component fetches data using sport-specific API functions and presents
  * the data in a consistent format regardless of sport type.
+ * 
+ * Updated to integrate with SportsContext, providing consistent season selection across app.
  */
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
 import { getNbaPlayersByTeam, getEplPlayersByTeam, getNflPlayersByTeam, getNbaTeams, getEplTeams, getNflTeams } from "../api";
+import { useSports } from "../context/SportsContext";
 import "./TeamPage.css";
 import nflLogo from "../assets/nfl-logo.png";
 import nbaLogo from "../assets/nba-logo.png";
 import premLogo from "../assets/prem-logo.png";
+import axios from "axios";
 
 function TeamPage() {
   const { sport, teamName } = useParams();
   const location = useLocation(); // Detects navigation change
+  const { selectedSeasons, setSeason } = useSports(); // Get selected seasons from context
 
   // ✅ State for players and team logo
   const [players, setPlayers] = useState([]);
   const [teamLogo, setTeamLogo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [availableSeasons, setAvailableSeasons] = useState([]);
+  const [selectedSeason, setSelectedSeason] = useState(null);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -34,36 +41,84 @@ function TeamPage() {
         let fetchedPlayers = [];
         let fetchedTeams = [];
 
+        let season = null;
         if (sport === "NBA") {
-          fetchedPlayers = await getNbaPlayersByTeam(teamName);
-          fetchedTeams = await getNbaTeams();
+          try {
+            const baseUrl = window.location.hostname === 'localhost' 
+              ? 'http://localhost:5000/api'
+              : '/api';
+            // Fetch available seasons from backend
+            const response = await axios.get(`${baseUrl}/available-seasons/NBA`);
+            const availableSeasons = response.data.length > 0 ? response.data : [2025, 2024];
+            setAvailableSeasons(availableSeasons);
+
+            // Use selected season from context, or first available season
+            season = selectedSeasons.NBA || (availableSeasons.length > 0 ? availableSeasons[0] : 2025);
+            
+            // Fetch players for this team and season
+            fetchedPlayers = await getNbaPlayersByTeam(teamName, season);
+            fetchedTeams = await getNbaTeams();
+          } catch (error) {
+            console.error("Error fetching NBA seasons:", error);
+            setAvailableSeasons([2025, 2024]); // Fallback
+
+            // Still attempt to fetch players with default season
+            season = selectedSeasons.NBA || 2025;
+            fetchedPlayers = await getNbaPlayersByTeam(teamName, season);
+            fetchedTeams = await getNbaTeams();
+          }
         } else if (sport === "Premier League") {
-          fetchedPlayers = await getEplPlayersByTeam(teamName);
-          fetchedTeams = await getEplTeams();
+          try {
+            // Fetch available seasons
+            const baseUrl = window.location.hostname === 'localhost' 
+              ? 'http://localhost:5000/api'
+              : '/api';
+            const response = await axios.get(`${baseUrl}/available-seasons/EPL`);
+            const availableSeasons = response.data.length > 0 ? response.data : [2024, 2023];
+            setAvailableSeasons(availableSeasons);
+            
+            // Use selected season from context, or first available season
+            season = selectedSeasons.EPL || (availableSeasons.length > 0 ? availableSeasons[0] : 2024);
+            
+            // Fetch players for this team and season
+            fetchedPlayers = await getEplPlayersByTeam(teamName, season);
+            fetchedTeams = await getEplTeams();
+          } catch (error) {
+            console.error("Error fetching EPL seasons:", error);
+            setAvailableSeasons([2024, 2023]); // Fallback
+
+            // Still attempt to fetch players with default season
+            season = selectedSeasons.EPL || 2024;
+            fetchedPlayers = await getEplPlayersByTeam(teamName, season);
+            fetchedTeams = await getEplTeams();
+          }
         } else if (sport === "NFL") {
           fetchedPlayers = await getNflPlayersByTeam(teamName);
           fetchedTeams = await getNflTeams();
         }
 
+        // Set selected season to context value
+        setSelectedSeason(season);
+
         setPlayers(fetchedPlayers);
 
-        // ✅ Find the team logo using flexible name matching
-        const teamData = fetchedTeams.find(team => {
-          const displayName = team.name.toLowerCase();
-          const searchName = teamName.toLowerCase();
-          
-          // Match exact name or common variations
-          return displayName.includes(searchName) || 
-                 searchName.includes(displayName) ||
-                 displayName.replace(' fc', '').includes(searchName) ||
-                 searchName.replace(' fc', '').includes(displayName);
-        });
+        // Find team logo
+        if (fetchedTeams.length > 0) {
+          const teamData = fetchedTeams.find(team => {
+            const displayName = team.name?.toLowerCase() || '';
+            const searchName = teamName.toLowerCase();
+            
+            return displayName.includes(searchName) || 
+                  searchName.includes(displayName) ||
+                  displayName.replace(' fc', '').includes(searchName) ||
+                  searchName.replace(' fc', '').includes(displayName);
+          });
 
-        console.log("Team data found:", teamData); // Debug log
-        if (teamData && teamData.logo) {
-          setTeamLogo(teamData.logo);
-        } else {
-          console.warn("No team logo found for:", teamName);
+          if (teamData && teamData.logo) {
+            setTeamLogo(teamData.logo);
+          } else {
+            console.warn("No team logo found for:", teamName);
+          }
         }
       } catch (error) {
         console.error(`Failed to fetch players for ${teamName}:`, error);
@@ -72,7 +127,65 @@ function TeamPage() {
     };
 
     fetchPlayers();
-  }, [sport, teamName, location.pathname]); // ✅ Re-fetch when navigating back
+  }, [sport, teamName, location.pathname, selectedSeasons]); // ✅ Re-fetch when navigating back
+
+  // Season selector component
+  const renderSeasonSelector = () => {
+    if (availableSeasons.length <= 1 || sport === "NFL") return null;
+    
+    return (
+      <div className="season-selector">
+        <label htmlFor="season-select">Season: </label>
+        <select 
+          id="season-select" 
+          value={selectedSeason || ''}
+          onChange={handleSeasonChange}
+        >
+          {availableSeasons.map(season => (
+            <option key={season} value={season}>
+              {sport === "Premier League" ? `${season}-${season+1}` : season}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+  
+  // Handle season change
+  const handleSeasonChange = (e) => {
+    const newSeason = parseInt(e.target.value, 10);
+    console.log("Changing season to:", newSeason); // Debug log
+    setSelectedSeason(newSeason);
+    setLoading(true); // Show loading while changing
+    
+    // Update global context based on sport
+    if (sport === "NBA") {
+      setSeason('NBA', newSeason);
+      getNbaPlayersByTeam(teamName, newSeason)
+      .then(players => {
+        console.log(`Got ${players.length} NBA players for season ${newSeason}`);
+        setPlayers(players);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching players with new season:", err);
+        setLoading(false);
+      });
+    } else if (sport === "Premier League") {
+      setSeason('EPL', newSeason);
+      // Force refetch players with new season
+      getEplPlayersByTeam(teamName, newSeason)
+      .then(players => {
+        console.log(`Got ${players.length} EPL players for season ${newSeason}`);
+        setPlayers(players);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching players with new season:", err);
+        setLoading(false);
+      });
+    }
+  };
 
   if (loading) return <div>Loading players...</div>;
 
@@ -86,6 +199,7 @@ function TeamPage() {
           {sport === "NFL" && <img src={nflLogo} alt="NFL Logo" className="league-logo" />}
           {sport === "Premier League" && <img src={premLogo} alt="Premier League Logo" className="league-logo" />}
           <h2 className="league-name">{sport}</h2>
+          {renderSeasonSelector()}
         </div>
 
         <div className="team-header">
@@ -100,12 +214,23 @@ function TeamPage() {
           <Link to={`/player/${player.id}`} key={player.id} className="player-card">
             {sport === "NBA" && (
               <div>
-                <p>{player.name} - {player.position} - #{player.number}</p>
+                <p>
+                  {player.name} - {player.position || "N/A"} 
+                  {player.number && player.number !== "N/A" ? ` - #${player.number}` : ""}
+                  {player.stats?.sportStats?.points ? ` - ${player.stats.sportStats.points} PPG` : ""}
+                  {player.stats?.gamesPlayed ? ` - ${player.stats.gamesPlayed} games` : ""}
+                </p>
               </div>
             )}
             {sport === "Premier League" && (
               <div>
-                <p>{player.name} - {player.position} - Goals: {player.goals || 0} - Appearances: {player.appearances}</p>
+                <p>
+                  {player.name} - {player.position || "N/A"}
+                  {player.position && player.position.toLowerCase().includes('goalkeeper') 
+                    ? ` - ${player.stats?.sportStats?.goalsSaved || 0} saves`
+                    : ` - ${player.stats?.sportStats?.goals || 0} goals`}
+                  {player.stats?.gamesPlayed ? ` - ${player.stats.gamesPlayed} appearances` : ''}
+                </p>
               </div>
             )}
             {sport === "NFL" && (

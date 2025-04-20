@@ -19,12 +19,87 @@ import express from 'express';
 import Team from '../models/Team.js';
 import Player from '../models/Player.js';
 import NbaPlayerStats from '../models/NBAPlayerStats.js';
+import EPLPlayerStats from '../models/EPLPlayerStats.js';
 import { updateSportsData, updateNbaDataOnly } from '../services/updateService.js';
 import { updateNBATeam } from '../services/nbaService.js';
-import config from '../config/nbaStatsConfig.js';
+import sportsConfig from '../config/sportsConfig.js';
 import SystemInfo from '../models/SystemInfo.js';
 
 const router = express.Router();
+
+/**
+ * Helper function to get standardized team abbreviation from team name
+ * @param {string} teamName - Full team name  
+ * @returns {string} Standardized team abbreviation or original name if not found
+ */
+function getTeamAbbreviation(teamName) {
+  // NBA team abbreviations
+  const abbrs = {
+    'Atlanta Hawks': 'ATL',
+    'Boston Celtics': 'BOS',
+    'Brooklyn Nets': 'BKN',
+    'Charlotte Hornets': 'CHA',
+    'Chicago Bulls': 'CHI',
+    'Cleveland Cavaliers': 'CLE',
+    'Dallas Mavericks': 'DAL',
+    'Denver Nuggets': 'DEN',
+    'Detroit Pistons': 'DET',
+    'Golden State Warriors': 'GSW',
+    'Houston Rockets': 'HOU',
+    'Indiana Pacers': 'IND',
+    'Los Angeles Clippers': 'LAC',
+    'Los Angeles Lakers': 'LAL',
+    'Memphis Grizzlies': 'MEM',
+    'Miami Heat': 'MIA',
+    'Milwaukee Bucks': 'MIL',
+    'Minnesota Timberwolves': 'MIN',
+    'New Orleans Pelicans': 'NOP',
+    'New York Knicks': 'NYK',
+    'Oklahoma City Thunder': 'OKC',
+    'Orlando Magic': 'ORL',
+    'Philadelphia 76ers': 'PHI',
+    'Phoenix Suns': 'PHX',
+    'Portland Trail Blazers': 'POR',
+    'Sacramento Kings': 'SAC',
+    'San Antonio Spurs': 'SAS',
+    'Toronto Raptors': 'TOR',
+    'Utah Jazz': 'UTA',
+    'Washington Wizards': 'WAS'
+  };
+  return abbrs[teamName] || teamName;
+}
+
+/**
+ * GET /api/available-seasons/:league
+ * Returns a list of available seasons for a specific league based on stored stats data.
+ * @param {string} req.params.league - League identifier (NBA, EPL)
+ * @returns {Array} List of available season years, sorted descending.
+ */
+router.get('/available-seasons/:league', async (req, res) => {
+  try {
+    const league = req.params.league.toUpperCase();
+    let seasons = [];
+
+    if (league === 'NBA') {
+      // Find distinct season years from the 'regularSeasons' array within NbaPlayerStats
+      const results = await NbaPlayerStats.distinct('regularSeasons.season');
+      // Also check playoffs in case regular season data is missing for a year
+      const playoffResults = await NbaPlayerStats.distinct('playoffs.season');
+      seasons = [...new Set([...results, ...playoffResults])].sort((a, b) => b - a); // Combine, unique, sort descending
+    }
+    else if (league === 'EPL') {
+      // Find distinct season years from the 'seasons' array within EPLPlayerStats
+      const results = await EPLPlayerStats.distinct('seasons.season');
+      seasons = results.sort((a, b) => b - a); // Sort descending
+    }
+    // Add NFL logic here if/when NFL seasons are implemented
+
+    res.json(seasons);
+  } catch (error) {
+    console.error(`Error fetching available seasons for ${req.params.league}:`, error);
+    res.status(500).json({ message: 'Failed to fetch available seasons' });
+  }
+});
 
 /**
  * GET /api/teams/:league
@@ -40,12 +115,20 @@ const router = express.Router();
 router.get('/teams/:league', async (req, res) => {
     try {
       const league = req.params.league.toUpperCase();
+      const season = req.query.season ? parseInt(req.query.season, 10) : null;
       let teams;
       
       // Different sorting based on league
       if (league === 'EPL') {
-        // EPL teams sorted by rank
-        teams = await Team.find({ league }).sort({ 'standings.rank': 1 });
+        // If a specific season is requested, filter teams that have data for that season
+        if (season) {
+          // Use aggregation to join with player stats and filter by season
+          // This is a simplified version - implement as needed for your data structure
+          teams = await Team.find({ league }).sort({ 'standings.rank': 1 });
+        } else {
+          // EPL teams sorted by rank
+          teams = await Team.find({ league }).sort({ 'standings.rank': 1 });
+        }
       } else if (league === 'NBA') {
         // NBA teams with no specific sorting (alphabetical sorting will be done on frontend)
         teams = await Team.find({ league });
@@ -72,21 +155,195 @@ router.get('/teams/:league', async (req, res) => {
  * @returns {Object} Team details and player roster
  */
 router.get('/team/:teamId', async (req, res) => {
-    try {
-      const teamId = req.params.teamId;
-      const team = await Team.findOne({ teamId });
+  try {
+    const teamId = req.params.teamId;
+    const season = req.query.season ? parseInt(req.query.season, 10) : null;
 
-      if (!team) return res.status(404).json({ message: 'Team not found' });
-      
-      // Only get players that are CURRENTLY on this team (teamId matches)
-      // This ensures traded players don't appear on multiple teams
-      const players = await Player.find({ teamId });
-      
-      res.json({ team, players });
-    } catch (error) {
-      console.error('Error fetching team:', error);
-      res.status(500).json({ message: error.message });
+    const team = await Team.findOne({ teamId });
+
+    if (!team) return res.status(404).json({ message: 'Team not found' });
+    
+    // Basic players query
+    let players = await Player.find({ teamId });
+    let playersWithStats = [];
+    
+    // Process players based on league and season
+    if (team.league === 'NBA') {
+      if (season) {
+        // Historical season approach: find players by their team in that season
+        console.log(`Finding players for team ${team.name || team.displayName} in season ${season}`);
+        
+        // Find ALL players who have stats for this season
+        const seasonPlayers = await NbaPlayerStats.find({
+          'regularSeasons.season': season
+        });
+        
+        // Get the team abbreviation for matching
+        const teamAbbr = getTeamAbbreviation(team.name || team.displayName);
+        const teamName = team.name || team.displayName;
+        
+        // Filter to only players who were on this team during this season
+        const playerIds = [];
+        const seasonPlayerMap = new Map(); // Store season data by player ID
+        
+        for (const playerStats of seasonPlayers) {
+          const seasonData = playerStats.regularSeasons.find(s => s.season === season);
+          if (!seasonData) continue;
+          
+          const wasOnTeam = seasonData.team === teamName || 
+                           seasonData.team === team.displayName || 
+                           getTeamAbbreviation(seasonData.team) === teamAbbr;
+          
+          if (wasOnTeam) {
+            playerIds.push(`nba_${playerStats.playerId}`);
+            seasonPlayerMap.set(playerStats.playerId, seasonData);
+          }
+        }
+        
+        console.log(`Found ${playerIds.length} players for team ${teamName} in season ${season}`);
+        
+        // Now fetch these players from the Player collection
+        players = await Player.find({ playerId: { $in: playerIds } });
+        
+        // Process each player with their season-specific stats
+        for (const player of players) {
+          if (!player.nbaStatsRef) continue;
+          
+          const seasonData = seasonPlayerMap.get(player.nbaStatsRef);
+          if (!seasonData) continue;
+          
+          const playerObj = player.toObject();
+          
+          // Update player stats to use the selected season's data
+          playerObj.stats = {
+            gamesPlayed: seasonData.totals.games || 0,
+            gamesStarted: seasonData.totals.gamesStarted || 0,
+            sportStats: {
+              points: seasonData.totals.games > 0 ? (seasonData.totals.points / seasonData.totals.games).toFixed(1) : "0",
+              rebounds: seasonData.totals.games > 0 ? (seasonData.totals.totalRb / seasonData.totals.games).toFixed(1) : "0",
+              assists: seasonData.totals.games > 0 ? (seasonData.totals.assists / seasonData.totals.games).toFixed(1) : "0",
+              blocks: seasonData.totals.games > 0 ? (seasonData.totals.blocks / seasonData.totals.games).toFixed(1) : "0",
+              steals: seasonData.totals.games > 0 ? (seasonData.totals.steals / seasonData.totals.games).toFixed(1) : "0"
+            }
+          };
+          
+          playersWithStats.push(playerObj);
+        }
+      } else {
+        // Current season approach (use the existing code for this case)
+        // Get all NBA player stats refs
+        const playerIds = players.filter(p => p.nbaStatsRef).map(p => p.nbaStatsRef);
+        
+        // Find NBA stats for these players (all seasons)
+        const nbaStats = await NbaPlayerStats.find({
+          playerId: { $in: playerIds }
+        });
+        
+        // Map of stats by player ID for easy lookup
+        const statsMap = new Map();
+        nbaStats.forEach(stat => statsMap.set(stat.playerId, stat));
+        
+        // Process each player
+        for (const player of players) {
+          // Skip players without stats reference
+          if (!player.nbaStatsRef) continue;
+          
+          const playerStats = statsMap.get(player.nbaStatsRef);
+          if (!playerStats) continue;
+          
+          // Convert to regular object
+          const playerObj = player.toObject();
+          
+          // Use default stats
+          if (playerObj.stats && playerObj.stats.sportStats) {
+            playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
+          }
+          
+          playersWithStats.push(playerObj);
+        }
+      }
     }
+    else if (team.league === 'EPL') {
+      // Similar approach for EPL players
+      const playerIds = players.filter(p => p.playerId).map(p => p.playerId.replace('epl_', ''));
+      
+      // Find EPL stats for these players
+      const eplStats = await EPLPlayerStats.find({
+        playerId: { $in: playerIds }
+      });
+      
+      // Map of stats by player ID for easy lookup
+      const statsMap = new Map();
+      eplStats.forEach(stat => statsMap.set(stat.playerId, stat));
+      
+      // Process each player
+      for (const player of players) {
+        // Skip players without valid ID
+        if (!player.playerId) continue;
+        
+        const playerId = player.playerId.replace('epl_', '');
+        const playerStats = statsMap.get(playerId);
+        if (!playerStats) continue;
+        
+        // Convert to regular object
+        const playerObj = player.toObject();
+        
+        // Check if player has data for the requested season
+        let hasSeasonData = false;
+        
+        if (season && playerStats.seasons) {
+          // Sort seasons by descending order
+          const sortedSeasons = [...playerStats.seasons].sort((a, b) => b.season - a.season);
+          
+          // Find the requested season
+          const seasonData = sortedSeasons.find(s => s.season === season);
+          
+          if (seasonData) {
+            hasSeasonData = true;
+            
+            // Update player with this season's data
+            playerObj.position = seasonData.position || playerObj.position;
+            playerObj.stats = {
+              gamesPlayed: seasonData.appearances || 0,
+              sportStats: {
+                goals: seasonData.goals?.total || 0,
+                assists: seasonData.goals?.assists || 0,
+                yellowCards: seasonData.cards?.yellow || 0,
+                redCards: seasonData.cards?.red || 0
+              }
+            };
+          }
+        }
+        
+        // If no season specified or no data for the requested season, use default stats
+        if (!season || !hasSeasonData) {
+          if (playerObj.stats && playerObj.stats.sportStats) {
+            playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
+          }
+        }
+        
+        // If we're filtering by season and this player has no data, skip them
+        if (season && !hasSeasonData) continue;
+        
+        playersWithStats.push(playerObj);
+      }
+    }
+    else {
+      // For NFL, just use the regular players for now
+      playersWithStats = players.map(player => {
+        const playerObj = player.toObject();
+        if (playerObj.stats && playerObj.stats.sportStats) {
+          playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
+        }
+        return playerObj;
+      });
+    }
+    
+    res.json({ team, players: playersWithStats });
+  } catch (error) {
+    console.error('Error fetching team:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 /**
@@ -105,8 +362,10 @@ router.get('/player/:playerId', async (req, res) => {
   try {
     const player = await Player.findOne({ playerId: req.params.playerId });
     if (!player) return res.status(404).json({ message: 'Player not found' });
-    
-    console.log(`Found player ${player.name} with nbaStatsRef: ${player.nbaStatsRef}`);
+
+    // Get requested season from query parameter
+    const requestedSeason = req.query.season ? parseInt(req.query.season) : null;
+    console.log(`Player ${player.name} requested with season: ${requestedSeason || 'default'}`);
     
     // Convert the player to a plain object
     const playerObj = player.toObject();
@@ -115,18 +374,36 @@ router.get('/player/:playerId', async (req, res) => {
     if (player.league === 'NBA' && player.nbaStatsRef) {
       const nbaStats = await NbaPlayerStats.findOne({ playerId: player.nbaStatsRef });
       
-      console.log(`NBA Stats found: ${Boolean(nbaStats)}, regularSeasons: ${nbaStats ? nbaStats.regularSeasons.length : 0}`);
+      //console.log(`NBA Stats found: ${Boolean(nbaStats)}, regularSeasons: ${nbaStats ? nbaStats.regularSeasons.length : 0}`);
       
       if (nbaStats) {
-        // Get most recent regular season
+        // Add all seasons to the response for the frontend to use
+        playerObj.regularSeasons = nbaStats.regularSeasons;
+        playerObj.playoffs = nbaStats.playoffs;
+
+        // Make sure seasons are sorted by year (newest first)
+        if (playerObj.regularSeasons) {
+          playerObj.regularSeasons.sort((a, b) => b.season - a.season);
+        }
+        if (playerObj.playoffs) {
+          playerObj.playoffs.sort((a, b) => b.season - a.season);
+        }
+
+        // Find the requested season or use most recent
         const regularSeasons = nbaStats.regularSeasons;
-        if (regularSeasons.length > 0) {
+        if (regularSeasons && regularSeasons.length > 0) {
           // Sort by season descending
-          regularSeasons.sort((a, b) => b.season - a.season);
-          const currentSeason = regularSeasons[0];
+          //regularSeasons.sort((a, b) => b.season - a.season);
+
+          // Find the requested season or use most recent
+          const currentSeason = requestedSeason ? 
+            regularSeasons.find(s => s.season === requestedSeason) || regularSeasons[0] : 
+            regularSeasons[0]; 
           
-          console.log(`Current season totals: points=${currentSeason.totals.points}, games=${currentSeason.totals.games}`);
+          console.log(`Using ${currentSeason.season} season stats with totals: ${Boolean(currentSeason.totals)}`);
           
+          playerObj.team = currentSeason.team;
+
           // Add derived stats to maintain API compatibility
           playerObj.stats = {
             gamesPlayed: currentSeason.totals.games || 0,
@@ -135,7 +412,7 @@ router.get('/player/:playerId', async (req, res) => {
           };
 
           // Only add stats if there are games played (avoid division by zero)
-          if (currentSeason.totals.games > 0) {
+          if (currentSeason.totals && currentSeason.totals.games > 0) {
             playerObj.stats.sportStats = {
               points: (currentSeason.totals.points / currentSeason.totals.games).toFixed(1),
               rebounds: (currentSeason.totals.totalRb / currentSeason.totals.games).toFixed(1),
@@ -146,7 +423,44 @@ router.get('/player/:playerId', async (req, res) => {
           }
         }
       }
-    } else if (playerObj.stats && playerObj.stats.sportStats) {
+    }
+    else if (player.league === 'EPL' && player.eplStatsRef) {
+      const eplStats = await EPLPlayerStats.findOne({ playerId: player.eplStatsRef });
+      
+      //console.log(`EPL Stats found: ${Boolean(eplStats)}`);
+      
+      if (eplStats) {
+        // Add photo from detailed stats
+        playerObj.photo = eplStats.photo;
+        
+        // Add the seasons array to the player object
+        playerObj.seasons = eplStats.seasons; // Seasons array contains all the detailed player statistics
+        
+        // Make sure we have the correct position
+        // if (eplStats.seasons && eplStats.seasons.length > 0) {
+        //   playerObj.position = eplStats.seasons[0].position || playerObj.position;
+        // }
+
+        // If seasons exist and a season was requested, find that specific season
+        if (eplStats.seasons && eplStats.seasons.length > 0) {
+          // Sort seasons by descending order
+          const sortedSeasons = [...eplStats.seasons].sort((a, b) => b.season - a.season);
+          
+          // Find requested season or use most recent
+          const currentSeason = requestedSeason ?
+            sortedSeasons.find(s => s.season === requestedSeason) || sortedSeasons[0] :
+            sortedSeasons[0];
+            
+          // Make the selected season the first one in the array for easy access by the frontend
+          playerObj.seasons = [
+            currentSeason,
+            ...sortedSeasons.filter(s => s.season !== currentSeason.season)
+          ];
+        }
+      }
+    }
+
+    if (playerObj.stats && playerObj.stats.sportStats) {
       // For non-NBA players, convert Map to object as before
       playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
     }
@@ -236,7 +550,7 @@ router.get('/nba-stats/player/:playerId/season/:season', async (req, res) => {
 router.get('/nba-stats/visualization/efficiency-usage', async (req, res) => {
   try {
     // Get parameters with defaults from configuration
-    const season = parseInt(req.query.season || config.currentSeason, 10);
+    const season = parseInt(req.query.season || sportsConfig.nba.currentSeason, 10);
     const type = req.query.type?.toLowerCase() === 'playoff' ? 'playoffs' : 'regularSeasons';
     const minGames = parseInt(req.query.minGames || 20, 10);
     
@@ -334,40 +648,110 @@ router.get('/search', async (req, res) => {
 router.get('/top-players/:league', async (req, res) => {
     try {
       const league = req.params.league.toUpperCase();
-      let players;
+      const season = req.query.season ? parseInt(req.query.season, 10) : null;
+
+      let players = [];
+      let nbaStats = [];
+      let eplStats = [];
       
-      // Get players by league with appropriate sorting
+      // NBA top players with season parameter
       if (league === 'NBA') {
-        // Get ALL NBA players with at least one game played
-        players = await Player.find({ 
-          league,
-          'stats.gamesPlayed': { $gt: 0 } 
-        });
-        
-        // Sort them all by PPG
-        players.sort((a, b) => {
-          const aPoints = a.stats.sportStats.get('points') || 0;
-          const bPoints = b.stats.sportStats.get('points') || 0;
+        // Use stats ref model to get players for specific season if provided
+        if (season) {
+          nbaStats = await NbaPlayerStats.find({
+            'regularSeasons.season': season
+          });
           
-          const aPPG = a.stats.gamesPlayed ? aPoints / a.stats.gamesPlayed : 0;
-          const bPPG = b.stats.gamesPlayed ? bPoints / b.stats.gamesPlayed : 0;
+          // Map player IDs to get player records
+          const playerIds = nbaStats.map(stat => `nba_${stat.playerId}`);
+          players = await Player.find({ 
+            playerId: { $in: playerIds } 
+          });
           
-          return bPPG - aPPG; // Higher PPG first
-        });
+          // Sort them by PPG using the season stats from NbaPlayerStats
+          players.sort((a, b) => {
+            // Find the relevant player stats
+            const aStats = nbaStats.find(s => s.playerId === a.nbaStatsRef);
+            const bStats = nbaStats.find(s => s.playerId === b.nbaStatsRef);
+            
+            // Get the specific season stats
+            const aSeasonStats = aStats?.regularSeasons?.find(s => s.season === season);
+            const bSeasonStats = bStats?.regularSeasons?.find(s => s.season === season);
+            
+            // Calculate PPG
+            const aPPG = aSeasonStats?.totals?.games > 0 ? 
+              aSeasonStats.totals.points / aSeasonStats.totals.games : 0;
+            const bPPG = bSeasonStats?.totals?.games > 0 ?
+              bSeasonStats.totals.points / bSeasonStats.totals.games : 0;
+            
+            return bPPG - aPPG;
+          });
+        } else {
+          // Default behavior when no season specified
+          players = await Player.find({ 
+            league,
+            'stats.gamesPlayed': { $gt: 0 } 
+          });
+          
+          // Sort by PPG
+          players.sort((a, b) => {
+            const aPoints = a.stats.sportStats.get('points') || 0;
+            const bPoints = b.stats.sportStats.get('points') || 0;
+            
+            const aPPG = a.stats.gamesPlayed ? aPoints / a.stats.gamesPlayed : 0;
+            const bPPG = b.stats.gamesPlayed ? bPoints / b.stats.gamesPlayed : 0;
+            
+            return bPPG - aPPG;
+          });
+        }
         
-        // Take top 10 from ALL players
+        // Take top 10
         players = players.slice(0, 10);
       } 
+      // EPL top players with season parameter
       else if (league === 'EPL') {
-        // EPL players sorted by goals (high to low)
-        players = await Player.find({ league })
-          .sort({ 'stats.sportStats.goals': -1 })
-          .limit(10);
-      }
-      else {
-        // NFL players (mock data, no specific sorting yet)
-        players = await Player.find({ league })
-          .limit(10);
+        if (season) {
+          // Find all EPL player stats for the specified season
+          eplStats = await EPLPlayerStats.find({
+            'seasons.season': season
+          });
+          
+          // Extract player IDs
+          const playerIds = eplStats.map(stat => `epl_${stat.playerId}`);
+          
+          // Find all players with these IDs
+          const allPlayers = await Player.find({
+            playerId: { $in: playerIds }
+          });
+
+          // Find all corresponding players
+          //players = await Player.find({ playerId: { $in: playerIds } });
+          
+          // Sort by goals for this specific season
+          players = allPlayers.sort((a, b) => {
+            // Find the corresponding stats documents
+            const aStats = eplStats.find(s => s.playerId === a.playerId.replace('epl_', ''));
+            const bStats = eplStats.find(s => s.playerId === b.playerId.replace('epl_', ''));
+            
+            // Find the specific season
+            const aSeasonStats = aStats?.seasons.find(s => s.season === season);
+            const bSeasonStats = bStats?.seasons.find(s => s.season === season);
+            
+            // Compare goals
+            const aGoals = aSeasonStats?.goals?.total || 0;
+            const bGoals = bSeasonStats?.goals?.total || 0;
+            
+            return bGoals - aGoals;  // Sort descending
+          });
+        } else {
+          // Default behavior - sort by goals in sportStats
+          players = await Player.find({ league })
+            .sort({ 'stats.sportStats.goals': -1 })
+            .limit(10);
+        }
+      } else {
+        // NFL - no season handling yet
+        players = await Player.find({ league }).limit(10);
       }
       
       // Format player data with team abbreviations and performance stats
@@ -382,51 +766,32 @@ router.get('/top-players/:league', async (req, res) => {
         const team = await Team.findOne({ teamId: player.teamId });
         const teamName = team ? team.displayName : 'Unknown Team';
         
-        const getTeamAbbr = (teamName) => {
-            // NBA team abbreviations
-            const abbrs = {
-              'Atlanta Hawks': 'ATL',
-              'Boston Celtics': 'BOS',
-              'Brooklyn Nets': 'BKN',
-              'Charlotte Hornets': 'CHA',
-              'Chicago Bulls': 'CHI',
-              'Cleveland Cavaliers': 'CLE',
-              'Dallas Mavericks': 'DAL',
-              'Denver Nuggets': 'DEN',
-              'Detroit Pistons': 'DET',
-              'Golden State Warriors': 'GSW',
-              'Houston Rockets': 'HOU',
-              'Indiana Pacers': 'IND',
-              'Los Angeles Clippers': 'LAC',
-              'Los Angeles Lakers': 'LAL',
-              'Memphis Grizzlies': 'MEM',
-              'Miami Heat': 'MIA',
-              'Milwaukee Bucks': 'MIL',
-              'Minnesota Timberwolves': 'MIN',
-              'New Orleans Pelicans': 'NOP',
-              'New York Knicks': 'NYK',
-              'Oklahoma City Thunder': 'OKC',
-              'Orlando Magic': 'ORL',
-              'Philadelphia 76ers': 'PHI',
-              'Phoenix Suns': 'PHX',
-              'Portland Trail Blazers': 'POR',
-              'Sacramento Kings': 'SAC',
-              'San Antonio Spurs': 'SAS',
-              'Toronto Raptors': 'TOR',
-              'Utah Jazz': 'UTA',
-              'Washington Wizards': 'WAS'
-            };
-            return abbrs[teamName] || teamName;
-        };
+        const teamAbbr = getTeamAbbreviation(teamName);
           
           // Format player display name with team and stats
           return {
             id: player.playerId,
-            name: `${player.name} (${getTeamAbbr(teamName)}) - ${
+            name: `${player.name} (${teamAbbr}) - ${
               league === 'NBA' 
-                ? (player.stats?.sportStats?.get('points') / player.stats?.gamesPlayed).toFixed(1) + ' ppg' 
+                ? (league === 'NBA' && season && player.nbaStatsRef) 
+                  ? (() => {
+                      // Find the relevant player stats for this specific season
+                      const stats = nbaStats.find(s => s.playerId === player.nbaStatsRef);
+                      const seasonStats = stats?.regularSeasons?.find(s => s.season === season);
+                      return seasonStats?.totals?.games > 0 
+                        ? (seasonStats.totals.points / seasonStats.totals.games).toFixed(1) + ' ppg'
+                        : '0.0 ppg';
+                    })() 
+                  : (player.stats?.sportStats?.get('points') / player.stats?.gamesPlayed).toFixed(1) + ' ppg'
                 : league === 'EPL' 
-                  ? (player.stats?.sportStats?.get('goals') || 0) + ' goals' 
+                  ? (league === 'EPL' && season) 
+                    ? (() => {
+                        // Find EPL stats for this season
+                        const stats = eplStats?.find(s => s.playerId === player.playerId.replace('epl_', ''));
+                        const seasonStats = stats?.seasons.find(s => s.season === season);
+                        return (seasonStats?.goals?.total || 0) + ' goals';
+                      })()
+                    : (player.stats?.sportStats?.get('goals') || 0) + ' goals'
                   : ''
             }`
           };
@@ -441,18 +806,30 @@ router.get('/top-players/:league', async (req, res) => {
 });
 
 /**
- * GET /api/last-update
- * Fetches the timestamp of the most recent data update
+ * GET /api/last-update/:league/:season
+ * Fetches the timestamp of the most recent data update for a specific league and season
+ * @param {string} req.params.league - League code (NBA, EPL)
+ * @param {number} req.params.season - Season year
  * @returns {Object} Last update timestamp information
  */
-router.get('/last-update', async (req, res) => {
-    try {
-      const lastUpdate = await SystemInfo.findOne({ key: 'lastUpdateTime' });
-      res.json(lastUpdate ? lastUpdate.value : null);
-    } catch (error) {
-      console.error('Error fetching last update time:', error);
-      res.status(500).json({ message: error.message });
+router.get('/last-update/:league?/:season?', async (req, res) => {
+  try {
+    const { league, season } = req.params;
+    let key = 'lastUpdateTime';
+    
+    if (league) {
+      key = `lastUpdate_${league}`;
+      if (season) {
+        key = `lastUpdate_${league}_${season}`;
+      }
     }
+    
+    const lastUpdate = await SystemInfo.findOne({ key });
+    res.json(lastUpdate ? lastUpdate.value : null);
+  } catch (error) {
+    console.error('Error fetching last update time:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 /**
@@ -475,7 +852,7 @@ router.post('/update', async (req, res) => {
         nfl: req.body.nfl !== false, //
         epl: req.body.epl !== false, //
         nbaType: req.body.nbaType || 'regular',
-        nbaSeason: parseInt(req.body.nbaSeason || config.currentSeason, 10)
+        nbaSeason: parseInt(req.body.nbaSeason || sportsConfig.nba.currentSeason, 10)
       };
       
       // Validate nbaType parameter

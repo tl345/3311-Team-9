@@ -22,9 +22,17 @@ const BACKEND_API_URL = import.meta.env.VITE_BACKEND_API_URL || (window.location
  * Gets players from the specialized top-players endpoint that processes and formats players with their team names and stats
  * @returns {Promise<Array>} Array of top NBA players
  */
-export const getNbaPlayers = async () => {
+export const getNbaPlayers = async (season = null) => {
     try {
-      const res = await axios.get(`${BACKEND_API_URL}/top-players/NBA`);
+      console.log(`Fetching NBA players for season: ${season || 'latest'}`); 
+
+      // Add season parameter to the API request if provided
+      const endpoint = season ? 
+        `${BACKEND_API_URL}/top-players/NBA?season=${season}` : 
+        `${BACKEND_API_URL}/top-players/NBA`;
+      // Get players from backend database
+      const res = await axios.get(endpoint);
+      console.log('NBA players response:', res.data); // Add debug log
       return res.data;
     } catch (error) {
       console.error('NBA Players Error:', error);
@@ -34,12 +42,18 @@ export const getNbaPlayers = async () => {
 
 /**
  * Fetches all NBA teams
+ * @param {number} season - Optional season parameter
  * @returns {Promise<Array>} Array of NBA teams sorted alphabetically
  */
-export const getNbaTeams = async () => {
+export const getNbaTeams = async (season = null) => {
     try {
+      // Add season parameter to URL if provided
+      const endpoint = season ?
+        `${BACKEND_API_URL}/teams/NBA?season=${season}` :
+        `${BACKEND_API_URL}/teams/NBA`;
+
       // Get teams and sort alphabetically by name
-      const res = await axios.get(`${BACKEND_API_URL}/teams/NBA`);
+      const res = await axios.get(endpoint);
       return res.data
         .map(team => ({
           id: team.teamId,
@@ -58,31 +72,37 @@ export const getNbaTeams = async () => {
  * @param {*} teamName - Name of the team
  * @returns {Promise<Array>} Array of players for the team
  */
-export const getNbaPlayersByTeam = async (teamName) => {
+export const getNbaPlayersByTeam = async (teamName, season = null) => {
     try {
       // Find the team ID first
       const teamsRes = await axios.get(`${BACKEND_API_URL}/teams/NBA`);
-    // More flexible team name matching
-    const team = teamsRes.data.find(t => {
-      const displayName = t.displayName.toLowerCase();
-      const searchName = teamName.toLowerCase();
-      
-      // Match exact name or common variations
-      return displayName.includes(searchName) || 
-             searchName.includes(displayName) ||
-             displayName.replace(' fc', '').includes(searchName) ||
-             searchName.replace(' fc', '').includes(displayName);
-    });
+      // More flexible team name matching
+      const team = teamsRes.data.find(t => {
+        const displayName = t.displayName.toLowerCase();
+        const searchName = teamName.toLowerCase();
+        
+        // Match exact name or common variations
+        return displayName.includes(searchName) || 
+              searchName.includes(displayName) ||
+              displayName.replace(' fc', '').includes(searchName) ||
+              searchName.replace(' fc', '').includes(displayName);
+      });
       
       if (!team) return [];
+
+      // Add season parameter to URL if provided
+      const endpoint = season ? 
+        `${BACKEND_API_URL}/team/${team.teamId}?season=${season}` :
+        `${BACKEND_API_URL}/team/${team.teamId}`;
       
       // Get the team with its players
-      const res = await axios.get(`${BACKEND_API_URL}/team/${team.teamId}`);
+      const res = await axios.get(endpoint);
       return res.data.players.map(player => ({
         id: player.playerId,
         name: player.name,
         position: player.position || "N/A",
         number: player.number || "N/A",
+        stats: player.stats
       }));
     } catch (error) {
       console.error(`NBA Team Players Error (${teamName}):`, error);
@@ -162,9 +182,14 @@ export const getNflTeams = async () => {
  * Fetches top EPL players based on goals scored
  * @returns {Promise<Array>} Array of top goal-scoring EPL players
  */
-export const getEplPlayers = async () => {
+export const getEplPlayers = async (season = null) => {
     try {
-      const res = await axios.get(`${BACKEND_API_URL}/top-players/EPL`);
+      // Add season parameter to the API request if provided
+      const endpoint = season ? 
+        `${BACKEND_API_URL}/top-players/EPL?season=${season}` : 
+        `${BACKEND_API_URL}/top-players/EPL`;
+      // Get players from backend database
+      const res = await axios.get(endpoint);
       return res.data;
     } catch (error) {
       console.error('EPL Players Error:', error);
@@ -174,12 +199,18 @@ export const getEplPlayers = async () => {
 
 /**
  * Fetches all EPL teams
+ * @param {number} season - Optional season parameter
  * @returns {Promise<Array>} Array of EPL teams sorted by rank
  */
-export const getEplTeams = async () => {
+export const getEplTeams = async (season = null) => {
     try {
+      // Add season parameter to URL if provided
+      const endpoint = season ?
+        `${BACKEND_API_URL}/teams/EPL?season=${season}` :
+        `${BACKEND_API_URL}/teams/EPL`;
+
       // Get teams sorted by standings (the backend sorts them by rank)
-      const res = await axios.get(`${BACKEND_API_URL}/teams/EPL`);
+      const res = await axios.get(endpoint);
       return res.data.map(team => ({
         id: team.teamId,
         name: team.displayName,
@@ -196,7 +227,7 @@ export const getEplTeams = async () => {
  * @param {string} teamName - Name of the team
  * @returns {Promise<Array>} Array of players for the team
  */
-export const getEplPlayersByTeam = async (teamName) => {
+export const getEplPlayersByTeam = async (teamName, season = null) => {
   try {
     console.log(`Fetching players for team: ${teamName}`); // Debug log
 
@@ -229,16 +260,21 @@ export const getEplPlayersByTeam = async (teamName) => {
       return [];
     }
     
-    console.log("Matched team:", {
-      id: team.teamId,
-      name: team.name,
-      displayName: team.displayName
-    });
+    // console.log("Matched team:", {
+    //   id: team.teamId,
+    //   name: team.name,
+    //   displayName: team.displayName
+    // });
 
     // Fetch players from the found team using full team ID
-    const teamId = `epl_${team.teamId}`;
-    console.log(`Fetching players for team ID: ${teamId}`);
-    const res = await axios.get(`${BACKEND_API_URL}/team/${teamId}`);
+    const teamId = team.teamId;
+    console.log(`Fetching players for team ID: ${teamId} and season: ${season}`); 
+    
+    const endpoint = season ?
+      `${BACKEND_API_URL}/team/${teamId}?season=${season}` : 
+      `${BACKEND_API_URL}/team/${teamId}`;
+    
+    const res = await axios.get(endpoint);
     console.log("Players response:", {
       status: res.status,
       data: res.data
@@ -249,8 +285,7 @@ export const getEplPlayersByTeam = async (teamName) => {
       name: player.name,
       position: player.position || "N/A",
       number: player.number || "N/A",
-      appearances: player.stats?.gamesPlayed || "N/A",
-      goals: player.stats?.sportStats?.goals || 0,
+      stats: player.stats
     }));
 
   } catch (error) {
@@ -259,49 +294,140 @@ export const getEplPlayersByTeam = async (teamName) => {
   }
 };
 
+function isEplGoalkeeper(position) {
+  if (!position) return false;
+  return position.toLowerCase().includes('goalkeeper') || 
+         position.toLowerCase() === 'gk' ||
+         position.toLowerCase() === 'g';
+}
 
 /**
  * Fetches detailed player statistics for any player
  * @param {string} playerId - Player's unique ID
  * @returns {Promise<Object>} Player details with sport-specific stats
  */
-export const getPlayerDetails = async (playerId) => {
+export const getPlayerDetails = async (playerId, season = null) => {
     try {
+      console.log(`Fetching player details for ${playerId} with season: ${season || 'default'}`);
+      // Add season parameter to the API request if provided
+      const endpoint = season ? 
+        `${BACKEND_API_URL}/player/${playerId}?season=${season}` : 
+        `${BACKEND_API_URL}/player/${playerId}`;
+
       // Get player details from backend database
-      const res = await axios.get(`${BACKEND_API_URL}/player/${playerId}`);
+      const res = await axios.get(endpoint);
       const player = res.data;
+
+      // Preserve regularSeasons and playoffs arrays if available
+      const regularSeasons = player.regularSeasons;
+      const playoffs = player.playoffs;
+      const seasons = player.seasons;
       
       // Common player fields
       const playerDetails = {
         id: player.playerId,
         name: player.name,
+        image: player.photo, // only works if i add image as it seems to be using player database|| player.image,
+        team: player.seasons?.[0]?.team || player.team,
         league: player.league,
         nationality: player.nationality || "N/A",
         age: player.age || "N/A",
         height: player.height || "N/A",
         weight: player.weight || "N/A",
         appearances: player.stats?.gamesPlayed || "N/A",
-        stats: player.stats
+        stats: player.stats,
+        // These preserve season data
+        regularSeasons, 
+        playoffs,
+        seasons,
+        nbaStatsRef: player.nbaStatsRef
       };
       
       // Add sport-specific stats based on league
       if (player.league === 'EPL') {
+        const isKeeper = isEplGoalkeeper(player.seasons?.[0]?.position || player.position);
+        const currentSeason = player.seasons?.[0] || {};
+        
+        // Get the season-specific age
+        const currentAge = player.age || 0;
+        const latestSeason = 2024; // Current EPL season (2024-2025)
+        const selectedSeason = season || latestSeason;
+        const ageDifference = latestSeason - selectedSeason;
+        const adjustedAge = currentAge - ageDifference;
+
         return {
           ...playerDetails,
-          goals: player.stats?.sportStats?.goals || 0,
-          assists: player.stats?.sportStats?.assists || 0,
-          yellowCards: player.stats?.sportStats?.yellowCards || 0,
-          redCards: player.stats?.sportStats?.redCards || 0,
+          age: adjustedAge || "N/A",
+          height: player.height || "N/A",
+          weight: player.weight || "N/A",
+          appearances: currentSeason.appearances || playerDetails.appearances || 0,
+          position: currentSeason.position || player.position || "N/A",
+          yellowCards: currentSeason.cards?.yellow || 0,
+          redCards: currentSeason.cards?.red || 0,
+          isGoalkeeper: isKeeper,
+          
+          // Goalkeeper stats
+          cleanSheets: isKeeper ? (currentSeason.cleanSheets || 0) : undefined,
+          goalsSaved: isKeeper ? currentSeason.goals?.saves || 0 : undefined,
+          goalsConceded: isKeeper ? currentSeason.goals?.conceded || 0 : undefined,
+          penaltySaved: isKeeper ? currentSeason.penalty?.saved || 0 : undefined,
+          
+          // Outfield player stats
+          goals: !isKeeper ? currentSeason.goals?.total || 0 : undefined,
+          assists: !isKeeper ? currentSeason.goals?.assists || 0 : undefined,
+          keyPasses: !isKeeper ? currentSeason.passes?.key || 0 : undefined,
+          totalPasses: !isKeeper ? currentSeason.passes?.total || 0 : undefined,
+          tackles: !isKeeper ? currentSeason.tackles?.total || 0 : undefined,
+          interceptions: !isKeeper ? currentSeason.tackles?.interceptions || 0 : undefined,
+          duelsTotal: !isKeeper ? currentSeason.duels?.total || 0 : undefined,
+          duelsWon: !isKeeper ? currentSeason.duels?.won || 0 : undefined,
+          dribblesAttempted: !isKeeper ? currentSeason.dribbles?.attempts || 0 : undefined,
+          dribblesSuccessful: !isKeeper ? currentSeason.dribbles?.success || 0 : undefined,
+          penaltyScored: !isKeeper ? currentSeason.penalty?.scored || 0 : undefined,
+          penaltyMissed: !isKeeper ? currentSeason.penalty?.missed || 0 : undefined
         };
       } else if (player.league === 'NBA') {
+        // Find the season-specific stats instead of using the default stats
+        let seasonStats = {};
+        let currentSeason = null;
+        
+        if (regularSeasons && regularSeasons.length > 0) {
+          // Find the current season data
+          currentSeason = regularSeasons.find(s => s.season === season) || regularSeasons[0];
+          
+          // Calculate per-game stats from the season totals
+          if (currentSeason.totals && currentSeason.totals.games > 0) {
+            seasonStats = {
+              points: (currentSeason.totals.points / currentSeason.totals.games).toFixed(1),
+              rebounds: (currentSeason.totals.totalRb / currentSeason.totals.games).toFixed(1),
+              assists: (currentSeason.totals.assists / currentSeason.totals.games).toFixed(1),
+              blocks: (currentSeason.totals.blocks / currentSeason.totals.games).toFixed(1),
+              steals: (currentSeason.totals.steals / currentSeason.totals.games).toFixed(1)
+            };
+          }
+        }
+        
         return {
           ...playerDetails,
-          // The player.stats.sportStats fields are now strings, not numbers
-          points: parseFloat(player.stats?.sportStats?.points || 0),
-          assists: parseFloat(player.stats?.sportStats?.assists || 0),
-          rebounds: parseFloat(player.stats?.sportStats?.rebounds || 0),
-          blocks: parseFloat(player.stats?.sportStats?.blocks || 0),
-          steals: parseFloat(player.stats?.sportStats?.steals || 0)
+          // Use the season-specific stats we calculated above
+          age: currentSeason?.age || playerDetails.age,
+          points: parseFloat(seasonStats.points || player.stats?.sportStats?.points || 0),
+          assists: parseFloat(seasonStats.assists || player.stats?.sportStats?.assists || 0),
+          rebounds: parseFloat(seasonStats.rebounds || player.stats?.sportStats?.rebounds || 0),
+          blocks: parseFloat(seasonStats.blocks || player.stats?.sportStats?.blocks || 0),
+          steals: parseFloat(seasonStats.steals || player.stats?.sportStats?.steals || 0),
+          stats: {
+            ...(playerDetails.stats || {}),
+            gamesPlayed: currentSeason?.totals?.games || playerDetails.stats?.gamesPlayed || 0,
+            sportStats: {
+              // Add optional chaining to prevent errors if seasonStats is undefined
+              points: seasonStats?.points || playerDetails.stats?.sportStats?.points || "0",
+              assists: seasonStats?.assists || playerDetails.stats?.sportStats?.assists || "0",
+              rebounds: seasonStats?.rebounds || playerDetails.stats?.sportStats?.rebounds || "0",
+              blocks: seasonStats?.blocks || playerDetails.stats?.sportStats?.blocks || "0",
+              steals: seasonStats?.steals || playerDetails.stats?.sportStats?.steals || "0"
+            }
+          }
         };
       } else {
         // NFL stats
@@ -377,15 +503,22 @@ export const updateSportsData = async () => {
 };
 
 /**
- * Fetches the most recent update timestamp
- * @returns {Promise<Object|null>} Object containing timestamp information or null if not found
+ * Fetches the last update time for the sports data
+ * @returns {Promise<Object|null>} Last update time object or null on error
  */
-export const getLastUpdateTime = async () => {
-    try {
-      const res = await axios.get(`${BACKEND_API_URL}/last-update`);
-      return res.data;
-    } catch (error) {
-      console.error('Failed to fetch update time:', error);
-      return null;
+export const getLastUpdateTime = async (league = null, season = null) => {
+  try {
+    let endpoint = `${BACKEND_API_URL}/last-update`;
+    if (league) {
+      endpoint += `/${league}`;
+      if (season) {
+        endpoint += `/${season}`;
+      }
     }
+    const res = await axios.get(endpoint);
+    return res.data;
+  } catch (error) {
+    console.error('Failed to fetch update time:', error);
+    return null;
+  }
 };

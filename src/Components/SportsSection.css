@@ -102,3 +102,16 @@
     padding: 10px 15px; /* Adjust padding */
   }
 }
+
+.season-selector {
+  margin-left: 10px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 0.9rem;
+}
+
+.season-selector:hover {
+  border-color: #646cff;
+}
