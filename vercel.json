@@ -21,7 +21,8 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/index.html"
+      "handle": "rewrite",
+      "dest": "dist/index.html"
     }
   ]
 }
