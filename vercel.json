@@ -21,8 +21,13 @@
     },
     {
       "src": "/(.*)",
-      "handle": "rewrite",
       "dest": "dist/index.html"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/dist/index.html"
     }
   ]
 }
