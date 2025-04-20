@@ -36,14 +36,28 @@ function PlayerList({ players, sport }) {
           {/* NBA player display: Name, position, jersey number */}
           {sport === "NBA" && (
             <div>
-              <p>{player.name} - {player.position || "N/A"} {player.number && player.number !== "N/A" ? `- #${player.number}` : ""}</p>
+              <p>
+                {player.name} - {player.position || "N/A"} 
+                {player.number && player.number !== "N/A" ? ` - #${player.number}` : ""}
+                {player.stats?.sportStats?.points ? ` - ${player.stats.sportStats.points} PPG` : ""}
+              </p>
             </div>
           )}
           
           {/* Premier League player display: Name, position, goals, appearances */}
-          {sport === "Premier League" && (
+          {/* {sport === "Premier League" && (
             <div>
               <p>{player.name} - {player.position || "N/A"} {player.goals !== undefined ? `- Goals: ${player.goals}` : ""} {player.appearances !== undefined ? `- Appearances: ${player.appearances}` : ""}</p>
+            </div>
+          )} */}
+          {sport === "Premier League" && (
+            <div>
+              <p>
+                {player.name} - {player.position || "N/A"} 
+                {player.position && player.position.toLowerCase().includes('goalkeeper') 
+                  ? ` - ${player.stats?.sportStats?.goalsSaved || 0} saves` 
+                  : ` - ${player.stats?.sportStats?.goals || 0} goals`}
+              </p>
             </div>
           )}
           

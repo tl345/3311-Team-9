@@ -18,7 +18,7 @@ import axios from 'axios';
 import NbaPlayerStats from '../models/NBAPlayerStats.js';
 import Player from '../models/Player.js';
 import SystemInfo from '../models/SystemInfo.js';
-import config from '../config/nbaStatsConfig.js';
+import sportsConfig from '../config/sportsConfig.js';
 import { convertTeamFormat } from '../utils/nbaStatsUtils.js';
 
 /**
@@ -26,28 +26,28 @@ import { convertTeamFormat } from '../utils/nbaStatsUtils.js';
  * Determines whether to fetch regular season or playoff data based on configuration
  * @returns {Promise<boolean>} Success status of the operation
  */
-export async function updateNbaStats() {
+export async function updateNbaStats(type = sportsConfig.nba.seasonType, season = sportsConfig.nba.currentSeason) {
     try {
-        console.log(`Starting NBA ${config.updateType} statistics update for season ${config.currentSeason}...`);
+        console.log(`Starting NBA ${type} statistics update for season ${season}...`);
         
         // Record start time for performance logging
         const startTime = new Date();
         
         // Determine which endpoints to use based on configuration
-        if (config.updateType === 'regular') {
+        if (type === 'regular') {
             // Update regular season data
-            const totalsSuccess = await fetchAndProcessTotals(false);
-            const advancedSuccess = await fetchAndProcessAdvanced(false);
+            const totalsSuccess = await fetchAndProcessTotals(false, season);
+            const advancedSuccess = await fetchAndProcessAdvanced(false, season);
             
             // Log and return overall success
             const success = totalsSuccess && advancedSuccess;
             logUpdateStatus('NBA Regular Season', success, startTime);
             return success;
         } 
-        else if (config.updateType === 'playoff') {
+        else if (type === 'playoff') {
             // Update playoff data
-            const totalsSuccess = await fetchAndProcessTotals(true);
-            const advancedSuccess = await fetchAndProcessAdvanced(true);
+            const totalsSuccess = await fetchAndProcessTotals(true, season);
+            const advancedSuccess = await fetchAndProcessAdvanced(true, season);
             
             // Log and return overall success
             const success = totalsSuccess && advancedSuccess;
@@ -55,7 +55,7 @@ export async function updateNbaStats() {
             return success;
         }
         else {
-            console.error(`Invalid update type: ${config.updateType}`);
+            console.error(`Invalid update type: ${type}`);
             return false;
         }
     } 
@@ -68,16 +68,17 @@ export async function updateNbaStats() {
 /**
  * Fetches and processes player totals statistics
  * @param {boolean} isPlayoffs - Whether to fetch playoff data (true) or regular season data (false)
+ * @param {number} season - The season year to fetch
  * @returns {Promise<boolean>} Success status
  */
-async function fetchAndProcessTotals(isPlayoffs) { // First API call
+async function fetchAndProcessTotals(isPlayoffs, season) { // First API call
     // Determine the endpoint based on whether we're fetching regular season or playoff data
     const endpoint = isPlayoffs 
-        ? `${config.apiBaseUrl}/PlayerDataTotalsPlayoffs/season/${config.currentSeason}`
-        : `${config.apiBaseUrl}/PlayerDataTotals/season/${config.currentSeason}`;
+        ? `${sportsConfig.nba.apiBaseUrl}/PlayerDataTotalsPlayoffs/season/${season}`
+        : `${sportsConfig.nba.apiBaseUrl}/PlayerDataTotals/season/${season}`;
     
     try {
-        //console.log(`Fetching ${isPlayoffs ? 'playoff' : 'regular season'} totals for ${config.currentSeason}...`);
+        console.log(`Fetching ${isPlayoffs ? 'playoff' : 'regular season'} totals for ${season}...`);
         
         // Make API call to fetch bulk player data
         const response = await axios.get(endpoint);
@@ -108,16 +109,17 @@ async function fetchAndProcessTotals(isPlayoffs) { // First API call
 /**
  * Fetches and processes player advanced statistics
  * @param {boolean} isPlayoffs - Whether to fetch playoff data (true) or regular season data (false)
+ * @param {number} season - Season year to fetch
  * @returns {Promise<boolean>} Success status
  */
-async function fetchAndProcessAdvanced(isPlayoffs) { // Second API call
+async function fetchAndProcessAdvanced(isPlayoffs, season) { // Second API call
     // Determine the endpoint based on whether we're fetching regular season or playoff data
     const endpoint = isPlayoffs 
-        ? `${config.apiBaseUrl}/PlayerDataAdvancedPlayoffs/season/${config.currentSeason}`
-        : `${config.apiBaseUrl}/PlayerDataAdvanced/season/${config.currentSeason}`;
+        ? `${sportsConfig.nba.apiBaseUrl}/PlayerDataAdvancedPlayoffs/season/${season}`
+        : `${sportsConfig.nba.apiBaseUrl}/PlayerDataAdvanced/season/${season}`;
     
     try {
-        console.log(`Fetching ${isPlayoffs ? 'playoff' : 'regular season'} advanced stats for ${config.currentSeason}...`);
+        console.log(`Fetching ${isPlayoffs ? 'playoff' : 'regular season'} advanced stats for ${season}...`);
         
         // Make API call to fetch bulk player data
         const response = await axios.get(endpoint);

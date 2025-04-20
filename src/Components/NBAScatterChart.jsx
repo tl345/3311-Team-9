@@ -202,7 +202,7 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
           <div className="compact-explanation">
             <p>
               This chart shows the player's scoring <strong>efficiency</strong> (True Shooting %) 
-              vs <strong>usage rate</strong> (% of team plays used). 
+              vs <strong>usage rate</strong> (% of team's possesions a player uses while on the floor). 
               The top-right quadrant represents elite offensive players who efficiently 
               handle high volume. Highlighted point shows the current player.
             </p>

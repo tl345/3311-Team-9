@@ -13,7 +13,7 @@
  * The Header component is shown on all pages for consistent navigation
  */
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Header from "./Components/Header";
 import SportsSection from "./Components/SportsSection";
 import TeamPage from "./Components/TeamPage";
@@ -25,31 +25,29 @@ import "./index.css";
 
 function App() {
   return (
-    <Router>
-      <div className="app">
-        {/* Header appears on all pages */}
-        <Header />
-        <Routes>
-          {/* Home Page: Shows sports categories with top players */}
-          <Route path="/" element={<SportsSection />} />
+    <div className="app">
+      {/* Header appears on all pages */}
+      <Header />
+      <Routes>
+        {/* Home Page: Shows sports categories with top players */}
+        <Route path="/" element={<SportsSection />} />
 
-          {/* Team Page: Dynamic route with sport and team name parameters */}
-          <Route path="/team/:sport/:teamName" element={<TeamPage />} />
+        {/* Team Page: Dynamic route with sport and team name parameters */}
+        <Route path="/team/:sport/:teamName" element={<TeamPage />} />
 
-          {/* Player Page: Shows detailed stats for a specific player */}
-          <Route path="/player/:id" element={<PlayerPage />} />
+        {/* Player Page: Shows detailed stats for a specific player */}
+        <Route path="/player/:id" element={<PlayerPage />} />
 
-          {/* Standings Page: Shows all teams in a league */}
-          <Route path="/standings/:league" element={<StandingsPage />} />
+        {/* Standings Page: Shows all teams in a league */}
+        <Route path="/standings/:league" element={<StandingsPage />} />
 
-          {/* Update Page: Manually trigger data updates */}
-          <Route path="/update" element={<UpdatePage />} />
+        {/* Update Page: Manually trigger data updates */}
+        <Route path="/update" element={<UpdatePage />} />
 
-          {/* Search Results Page: Displays players and teams matching a query */}
-          <Route path="/search" element={<SearchResults />} />
-        </Routes>
-      </div>
-    </Router>
+        {/* Search Results Page: Displays players and teams matching a query */}
+        <Route path="/search" element={<SearchResults />} />
+      </Routes>
+    </div>
   );
 }
 

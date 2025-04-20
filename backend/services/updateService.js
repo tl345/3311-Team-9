@@ -13,7 +13,54 @@ import { updateNbaStats } from './nbaStatsService.js';
 import { updateNFLData } from './nflService.js';
 import { updateEPLData } from './eplService.js';
 import SystemInfo from '../models/SystemInfo.js';
-import config from '../config/nbaStatsConfig.js';
+import sportsConfig from '../config/sportsConfig.js';
+
+/**
+ * Logs the status of an update operation with season information
+ * @param {string} operation - Name of the operation (e.g., 'NBA', 'EPL')
+ * @param {boolean} success - Whether the operation succeeded
+ * @param {Date} startTime - When the operation started
+ * @param {number} season - Season year that was updated
+ */
+async function logSeasonUpdate(operation, success, startTime, season) {
+  const endTime = new Date();
+  const duration = (endTime - startTime) / 1000; // in seconds
+  
+  console.log(`${operation} season ${season} update ${success ? 'completed successfully' : 'failed'} in ${duration.toFixed(2)} seconds`);
+  
+  try {
+    // Create a general update record
+    await SystemInfo.findOneAndUpdate(
+      { key: `lastUpdate_${operation.replace(/\s+/g, '')}` },
+      {
+        value: {
+          success,
+          timestamp: endTime,
+          formattedTimestamp: endTime.toLocaleString(),
+          duration: duration.toFixed(2),
+          season
+        }
+      },
+      { upsert: true }
+    );
+    
+    // Create a season-specific record
+    await SystemInfo.findOneAndUpdate(
+      { key: `lastUpdate_${operation.replace(/\s+/g, '')}_${season}` },
+      {
+        value: {
+          success,
+          timestamp: endTime,
+          formattedTimestamp: endTime.toLocaleString(),
+          duration: duration.toFixed(2)
+        }
+      },
+      { upsert: true }
+    );
+  } catch (err) {
+    console.error(`Error updating system info:`, err);
+  }
+}
 
 /**
  * Updates data for all sports leagues based on provided options
@@ -31,41 +78,23 @@ export const updateSportsData = async (options = {
   nba: true,
   nfl: true,
   epl: true,
-  nbaType: 'regular',
-  nbaSeason: 2025
+  nbaType: sportsConfig.nba.seasonType,
+  nbaSeason: sportsConfig.nba.currentSeason,
+  eplSeason: sportsConfig.epl.currentSeason
 }) => {
   console.log('Starting sports data update...');
   
   const startTime = new Date();
   const results = {};
   
-  // console.log('Updating NBA data...');
-  // const nbaResult = await updateNBAData();
-  
-  // console.log('Updating NFL data...');
-  // const nflResult = await updateNFLData();
-  
-  // console.log('Updating EPL data...');
-  // const eplResult = await updateEPLData();
-
-  // Save original config values to restore later
-  const originalType = config.updateType;
-  const originalSeason = config.currentSeason;
-  
-  // Update config with options if provided
-  if (options.nbaType && ['regular', 'playoff'].includes(options.nbaType)) {
-    config.updateType = options.nbaType;
-  }
-  
-  if (options.nbaSeason) {
-    config.currentSeason = options.nbaSeason;
-  }
-  
   // NBA data update
   if (options.nba) {
-    console.log(`Updating NBA ${config.updateType} data for season ${config.currentSeason}...`);
+    const nbaStartTime = new Date();
+    console.log(`Updating NBA ${options.nbaType} data for season ${options.nbaSeason}...`);
     // Use the comprehensive NBA stats service
-    results.nba = await updateNbaStats();
+    results.nba = await updateNbaStats(options.nbaType, options.nbaSeason);
+    // Log NBA-specific update with season
+    await logSeasonUpdate('NBA', results.nba, nbaStartTime, options.nbaSeason);
   }
   
   // NFL data update
@@ -76,13 +105,12 @@ export const updateSportsData = async (options = {
   
   // EPL data update
   if (options.epl) {
-    console.log('Updating EPL data...');
-    results.epl = await updateEPLData();
+    const eplStartTime = new Date();
+    console.log(`Updating EPL data for season ${options.eplSeason}...` );
+    results.epl = await updateEPLData(options.eplSeason);
+    // Log EPL-specific update with season
+    await logSeasonUpdate('EPL', results.epl, eplStartTime, options.eplSeason);
   }
-  
-  // Restore original config values
-  config.updateType = originalType;
-  config.currentSeason = originalSeason;
   
   const endTime = new Date();
   const duration = (endTime - startTime) / 1000; // in seconds
@@ -123,7 +151,8 @@ export const updateSportsData = async (options = {
       nfl: options.nfl,
       epl: options.epl,
       nbaType: options.nbaType,
-      nbaSeason: options.nbaSeason
+      nbaSeason: options.nbaSeason,
+      eplSeason: options.eplSeason
     }
   };
 };
@@ -134,21 +163,14 @@ export const updateSportsData = async (options = {
  * @param {number} season - Season year
  * @returns {Promise<boolean>} Success status
  */
-export const updateNbaDataOnly = async (type = 'regular', season = config.currentSeason) => {
-  try {
-    // Temporarily override the config
-    const originalType = config.updateType;
-    const originalSeason = config.currentSeason;
-    
-    config.updateType = type;
-    config.currentSeason = season;
-    
+export const updateNbaDataOnly = async (type = sportsConfig.nba.seasonType, season = sportsConfig.nba.currentSeason) => {
+  try {    
+    const startTime = new Date();
     console.log(`Starting NBA ${type} data update for season ${season}...`);
-    const result = await updateNbaStats();
-    
-    // Restore original config
-    config.updateType = originalType;
-    config.currentSeason = originalSeason;
+    const result = await updateNbaStats(type, season);
+
+    // Log the season-specific update
+    await logSeasonUpdate('NBA', result, startTime, season);
     
     return result;
   } catch (error) {
@@ -173,12 +195,19 @@ export const updateNflDataOnly = async () => {
 
 /**
  * Updates EPL data only
+ * @param {number} season - Season to update
  * @returns {Promise<boolean>} Success status
  */
-export const updateEplDataOnly = async () => {
+export const updateEplDataOnly = async (season) => {
   try {
-    console.log('Starting EPL data update...');
-    return await updateEPLData();
+    const startTime = new Date();
+    console.log(`Starting EPL data update for season ${season || 'current'}...`);
+    const result = await updateEPLData(season);
+
+    // Log the season-specific update
+    await logSeasonUpdate('EPL', result, startTime, season);
+
+    return result;
   } catch (error) {
     console.error('EPL-only update failed:', error);
     return false;

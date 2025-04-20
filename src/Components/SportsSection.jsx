@@ -14,55 +14,134 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getNbaPlayers, getNflPlayers, getEplPlayers, getLastUpdateTime } from "../api";
+import { useSports } from "../context/SportsContext";
 import "./SportsSection.css";
 import nflLogo from "../assets/nfl-logo.png";
 import nbaLogo from "../assets/nba-logo.png";
 import premLogo from "../assets/prem-logo.png";
+import axios from "axios";
 
 function SportsSection() {
   // State for storing top players from each league
+  const { selectedSeasons, setSeason } = useSports();
   const [nbaTopPlayers, setNbaTopPlayers] = useState([]);
   const [nflTopPlayers, setNflTopPlayers] = useState([]);
   const [eplTopPlayers, setEplTopPlayers] = useState([]);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [availableNbaSeasons, setAvailableNbaSeasons] = useState([]);
+  const [availableEplSeasons, setAvailableEplSeasons] = useState([]);
 
   /**
-   * Effect to fetch top players data when component mounts
+   * Effect to fetch top players data when component mounts or seasons change
    * This loads the data for display in each sport category
    */
   useEffect(() => {
     const fetchData = async () => {
-        try {
-          // Fetch top players from each league with debug logging
-          console.log("Fetching NBA players...");
-          const nbaPlayers = await getNbaPlayers();
-          console.log("NBA players response:", nbaPlayers);
-          setNbaTopPlayers(nbaPlayers);
-          
-          console.log("Fetching NFL players...");
-          const nflPlayers = await getNflPlayers();
-          console.log("NFL players response:", nflPlayers);
-          setNflTopPlayers(nflPlayers);
-          
-          console.log("Fetching EPL players...");
-          const eplPlayers = await getEplPlayers();
-          console.log("EPL players response:", eplPlayers);
-          setEplTopPlayers(eplPlayers);
-
-          console.log("Fetching last update time...");
-          const updateTime = await getLastUpdateTime();
-          console.log("Last update time:", updateTime);
-          setLastUpdateTime(updateTime);
-        } catch (error) {
-          console.error("Error fetching sports data:", error);
-        } finally {
-          setLoading(false);
-        }
+      try {
+        setLoading(true);
+        
+        // Fetch in parallel to improve speed
+        const [nbaPlayersRes, nflPlayersRes, eplPlayersRes, updateTimeRes] = await Promise.all([
+          getNbaPlayers(selectedSeasons.NBA).catch(err => {
+            console.error("NBA fetch failed:", err);
+            return []; // Return empty array on error
+          }),
+          getNflPlayers().catch(err => {
+            console.error("NFL fetch failed:", err);
+            return []; // Return empty array on error
+          }),
+          getEplPlayers(selectedSeasons.EPL).catch(err => {
+            console.error("EPL fetch failed:", err);
+            return []; // Return empty array on error
+          }),
+          getLastUpdateTime().catch(err => {
+            console.error("Update time fetch failed:", err);
+            return null; // Return null on error
+          })
+        ]);
+        
+        setNbaTopPlayers(nbaPlayersRes || []);
+        setNflTopPlayers(nflPlayersRes || []);
+        setEplTopPlayers(eplPlayersRes || []);
+        setLastUpdateTime(updateTimeRes);
+      } catch (error) {
+        console.error("Error fetching sports data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
+  }, [selectedSeasons.NBA, selectedSeasons.EPL]); // Re-fetch data when selected seasons change
+
+  useEffect(() => {
+    async function fetchSeasons() {
+      try {
+        // Use your existing API base URL
+        const baseUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:5000/api'
+          : '/api';
+          
+        const nbaRes = await axios.get(`${baseUrl}/available-seasons/NBA`);
+        const eplRes = await axios.get(`${baseUrl}/available-seasons/EPL`);
+        
+        setAvailableNbaSeasons(nbaRes.data || [2025, 2024]);
+        setAvailableEplSeasons(eplRes.data || [2024, 2023]);
+      } catch (error) {
+        console.error("Error fetching seasons:", error);
+        setAvailableNbaSeasons([2025, 2024]);
+        setAvailableEplSeasons([2024, 2023]);
+      }
+    }
+    
+    fetchSeasons();
   }, []);
+
+  const handleSeasonChange = (league, e) => {
+    const season = parseInt(e.target.value, 10);
+    setSeason(league, season);
+  };
+
+  const renderSeasonSelector = (sport) => {
+    if (sport === "NFL") return null;
+    
+    const league = sport === "NBA" ? "NBA" : "EPL";
+    const seasons = league === "NBA" ? availableNbaSeasons : availableEplSeasons;
+    
+    if (seasons.length <= 1) return null;
+    
+    return (
+      <select 
+        className="season-selector"
+        value={selectedSeasons[league] || ''} 
+        onChange={(e) => handleSeasonChange(league, e)}
+      >
+        {seasons.map(season => (
+          <option key={season} value={season}>
+            {league === "EPL" ? `${season}-${season+1}` : season}
+          </option>
+        ))}
+      </select>
+    );
+  };
+
+  // Render season indicator for each sport
+  const renderSeasonIndicator = (sport) => {
+    const season = sport === "NBA" ? selectedSeasons.NBA : 
+                  sport === "Premier League" ? selectedSeasons.EPL : 
+                  null;
+                  
+    if (!season) return null;
+    
+    return (
+      <div className="season-indicator">
+        <span className="season-label">
+          {sport === "Premier League" ? `${season-1}-${season} Season` : `${season} Season`}
+        </span>
+      </div>
+    );
+  };
 
   // Sports categories with their logos and dynamic player data
   const sports = [
@@ -91,7 +170,7 @@ function SportsSection() {
   // Render the sports sections with all categories and last update time
   return (
     <div className="homepage-container">
-      {/* New element: Last Update Banner */}
+      {/* Last Update Banner */}
       {lastUpdateTime && (
         <div className="last-update-info">
           <span className="update-label">Data last updated:</span> {lastUpdateTime.formattedTimestamp}
@@ -104,6 +183,7 @@ function SportsSection() {
             <div className="sport-header">
               <img src={sport.logo} alt={`${sport.name} Logo`} className="sport-logo" />
               <h2>{sport.name}</h2>
+              {sport.name !== "NFL" && renderSeasonSelector(sport.name)}
             </div>
             <ol>
               {sport.players.length > 0 ? (
