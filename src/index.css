@@ -1,12 +1,14 @@
-/* Center the content */
+/* ==================================================
+   Global layout / typography
+   ================================================== */
+
+/* Center the content inside standings boxes */
 .standings-container {
-  max-width: 60%; 
+  max-width: 60%;
   margin: 0 auto;
   padding: 10px;
   text-align: center;
 }
-
-
 
 /* Make the list items spread out */
 .standings-list {
@@ -18,36 +20,34 @@
   padding: 0;
 }
 
-
-
 /* Team items should be aligned left */
 .standings-list li {
   width: 50%;
   text-align: left;
-  font-size: 1.1rem; 
+  font-size: 1.1rem;
   padding: 5px 0;
   margin: 2px 0;
   display: flex;
-  align-items: center; 
-  gap: 8px; 
+  align-items: center;
+  gap: 8px;
 }
 
-
 .standings-list img {
-  width: 25px; 
+  width: 25px;
   height: 25px;
   margin-right: 5px;
-  vertical-align: middle; 
+  vertical-align: middle;
 }
 
 .player-name {
-  font-size: 2.5rem; 
+  font-size: 2.5rem;
   font-weight: bold;
   color: blue;
   text-decoration: none;
 }
+
 .player-item {
-  margin-bottom: 8px; 
+  margin-bottom: 8px;
 }
 
 /* Adjust header size */
@@ -55,7 +55,6 @@
   font-size: 2rem;
   margin-bottom: 10px;
 }
-
 
 /* Add more spacing for better visual balance */
 .standings-container a {
@@ -65,15 +64,6 @@
   font-size: 1.2rem;
   color: #646cff;
 }
-/* Apply background image to the entire app */
-body {
-  background-image: url('./assets/sport.png');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-}
-
 
 /* Main app container */
 .app {
@@ -114,10 +104,36 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* ==================================================
+   Body backgrounds
+   ================================================== */
+
+/* Default global background (wood & balls) */
 body {
-  background-image: url('./assets/background.png');
+  /* file lives at src/assets/background.png */
+  background: url('./assets/background.png') no-repeat center center fixed;
   background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-attachment: fixed; 
+}
+
+/* Premier League pages only */
+body.premier-page {
+  /* file lives at src/assets/premier-background.png */
+  background: url('./assets/premier-background.png')
+    no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* NBA Standings pages only */
+body.nba-page {
+  /* file lives at src/assets/nba-background.png */
+  background: url('./assets/nba-background.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* NFL Standings pages only */
+body.nfl-page {
+  /* file lives at src/assets/nfl-background.png */
+  background: url('./assets/nfl-background.png') no-repeat center center fixed;
+  background-size: cover;
 }

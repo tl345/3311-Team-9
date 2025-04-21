@@ -16,7 +16,7 @@
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
         "express": "^4.18.2",
-        "mongodb": "^6.14.2",
+        "mongodb": "^6.15.0",
         "mongoose": "^8.0.1",
         "node-cron": "^3.0.2",
         "recharts": "^2.15.2"
