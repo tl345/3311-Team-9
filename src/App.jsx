@@ -10,41 +10,70 @@
  * - Update page: Functionality to update sports data
  * - Search page: Shows search results for players and teams
  * 
- * The Header component is shown on all pages for consistent navigation
+ * The Header component is shown on all pages for consistent navigation.
+ * 
+ * Background logic:
+ *  - By default <body> gets the global background via index.css.
+ *  - We detect the current route in useEffect() and toggle one of:
+ *      • body.premier-page   (for /standings/Premier League)
+ *      • body.nba-page       (for /standings/NBA)
+ *      • body.nfl-page       (for /standings/NFL)
+ *    so that each standings page fully replaces the global background.
  */
 
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+
 import Header from "./Components/Header";
 import SportsSection from "./Components/SportsSection";
 import TeamPage from "./Components/TeamPage";
 import PlayerPage from "./Components/PlayerPage";
 import StandingsPage from "./Components/StandingsPage";
 import UpdatePage from "./Components/UpdatePage";
-import SearchResults from "./Components/SearchResults"; // 👈 new import
+import SearchResults from "./Components/SearchResults";
+
 import "./index.css";
 
 function App() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // Remove any previous league classes
+    document.body.classList.remove("premier-page", "nba-page", "nfl-page");
+
+    // Add the appropriate class for this route
+    if (pathname.startsWith("/standings/Premier")) {
+      document.body.classList.add("premier-page");
+    } else if (pathname.startsWith("/standings/NBA")) {
+      document.body.classList.add("nba-page");
+    } else if (pathname.startsWith("/standings/NFL")) {
+      document.body.classList.add("nfl-page");
+    }
+    // All other routes use the default body background
+  }, [pathname]);
+
   return (
+    // .app provides consistent padding & min-height
     <div className="app">
-      {/* Header appears on all pages */}
       <Header />
+
       <Routes>
-        {/* Home Page: Shows sports categories with top players */}
+        {/* Home Page: sports categories */}
         <Route path="/" element={<SportsSection />} />
 
-        {/* Team Page: Dynamic route with sport and team name parameters */}
+        {/* Team Page: dynamic sport/team route */}
         <Route path="/team/:sport/:teamName" element={<TeamPage />} />
 
-        {/* Player Page: Shows detailed stats for a specific player */}
+        {/* Player Page: detailed stats */}
         <Route path="/player/:id" element={<PlayerPage />} />
 
-        {/* Standings Page: Shows all teams in a league */}
+        {/* Standings Page: league standings */}
         <Route path="/standings/:league" element={<StandingsPage />} />
 
-        {/* Update Page: Manually trigger data updates */}
+        {/* Update Page: manual data refresh */}
         <Route path="/update" element={<UpdatePage />} />
 
-        {/* Search Results Page: Displays players and teams matching a query */}
+        {/* Search Results Page */}
         <Route path="/search" element={<SearchResults />} />
       </Routes>
     </div>
