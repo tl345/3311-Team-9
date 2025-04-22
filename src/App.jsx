@@ -41,13 +41,30 @@ function App() {
     // Remove any previous league classes
     document.body.classList.remove("premier-page", "nba-page", "nfl-page");
 
-    // Add the appropriate class for this route
-    if (pathname.startsWith("/standings/Premier")) {
-      document.body.classList.add("premier-page");
-    } else if (pathname.startsWith("/standings/NBA")) {
-      document.body.classList.add("nba-page");
-    } else if (pathname.startsWith("/standings/NFL")) {
-      document.body.classList.add("nfl-page");
+    // Function to add the appropriate class based on league/sport name
+    const addLeagueClass = (sportName) => {
+      if (sportName.includes("Premier")) {
+        document.body.classList.add("premier-page");
+      } else if (sportName.includes("NBA")) {
+        document.body.classList.add("nba-page");
+      } else if (sportName.includes("NFL")) {
+        document.body.classList.add("nfl-page");
+      }
+    };
+
+    // Check different route patterns
+    if (pathname.startsWith("/standings/")) {
+      // For standings pages: /standings/[league]
+      const league = pathname.split("/standings/")[1];
+      addLeagueClass(league);
+    } else if (pathname.startsWith("/team/")) {
+      // For team pages: /team/[sport]/[teamName]
+      const sport = pathname.split("/team/")[1].split("/")[0];
+      addLeagueClass(sport);
+    } else if (pathname.startsWith("/player/")) {
+      // For player pages: /player/[id]
+      // The background will be set after player data is loaded
+      // and the league is known in PlayerPage.jsx
     }
     // All other routes use the default body background
   }, [pathname]);
