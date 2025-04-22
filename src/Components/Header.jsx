@@ -19,23 +19,18 @@ function Header() {
     <header className="header">
       {/* Site logo/name with link back to homepage */}
       <div className="logo-container">
-  <Link to="/" className="logo">
-    StatZone
-  </Link>
-</div>
-
-      
-      {/* Search functionality (placeholder for future implementation) */}
-      <SearchBar />
-      
-      <div className="nav-actions">
-        {/* Link to data update page */}
-        <Link to="/update" className="update-link">
-          Update Data
+        <Link to="/" className="logo">
+          StatZone
         </Link>
-        {/* Settings icon for future customization options */}
-        <SettingsIcon />
       </div>
+
+      {/* Search functionality in the center */}
+      <div className="search-container">
+        <SearchBar />
+      </div>
+      
+      {/* Empty div for flex balance */}
+      <div className="placeholder-right"></div>
     </header>
   );
 }
