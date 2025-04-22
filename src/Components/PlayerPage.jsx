@@ -29,29 +29,47 @@ import './PlayerPage.css';
 function PlayerPage() {
   const { id } = useParams();
   const location = useLocation();
-  // Get selected seasons and season setter from global context
   const { selectedSeasons, setSeason } = useSports();
-  
-  // Set initial background based on navigation state
-  useEffect(() => {
-    const league = location.state?.league;
-    if (league === "EPL") {
-      document.body.classList.remove("nba-page", "nfl-page");
-      document.body.classList.add("premier-page");
-    } else if (league === "NBA") {
-      document.body.classList.remove("premier-page", "nfl-page");
-      document.body.classList.add("nba-page");
-    } else if (league === "NFL") {
-      document.body.classList.remove("premier-page", "nba-page");
-      document.body.classList.add("nfl-page");
-    }
-  }, [location.state]);
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [availableSeasons, setAvailableSeasons] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState(null);
   const [lastUpdated, setLastUpdate] = useState(null);
   const navigate = useNavigate();
+
+  // Set initial background based on player data or navigation state
+  useEffect(() => {
+    const setBackgroundClass = (league) => {
+      document.body.classList.remove("premier-page", "nba-page", "nfl-page");
+      if (league === "EPL") {
+        document.body.classList.add("premier-page");
+      } else if (league === "NBA") {
+        document.body.classList.add("nba-page");
+      } else if (league === "NFL") {
+        document.body.classList.add("nfl-page");
+      }
+    };
+
+    // First try to get league from location state
+    const stateLeague = location.state?.league;
+    if (stateLeague) {
+      setBackgroundClass(stateLeague);
+    } else if (player?.league) {
+      // If no state, use player data
+      setBackgroundClass(player.league);
+    } else {
+      // If neither available, try to determine from player ID
+      const idPrefix = id.split('_')[0].toLowerCase();
+      if (idPrefix === 'epl') {
+        setBackgroundClass('EPL');
+      } else if (idPrefix === 'nba') {
+        setBackgroundClass('NBA');
+      } else if (idPrefix === 'nfl') {
+        setBackgroundClass('NFL');
+      }
+    }
+  }, [location.state, player, id]);
+
 
   /**
    * Fetches player details when component mounts or season changes
