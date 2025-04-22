@@ -119,7 +119,7 @@ function SportsSection() {
       >
         {seasons.map(season => (
           <option key={season} value={season}>
-            {league === "EPL" ? `${season}-${season+1}` : season}
+            {league === "EPL" ? `${season+1}` : season}
           </option>
         ))}
       </select>

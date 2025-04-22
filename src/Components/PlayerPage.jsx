@@ -23,6 +23,7 @@ import { getPlayerDetails, getLastUpdateTime } from '../api';
 import { useSports } from '../context/SportsContext';
 import NBAScatterChart from './NBAScatterChart';
 import SportsBarChart from './SportsBarChart';
+import { getFullTeamName } from '../utils/teamUtils'; // Utility function to convert team abbreviations to full names
 import './PlayerPage.css';
 
 function PlayerPage() {
@@ -141,7 +142,7 @@ function PlayerPage() {
         >
           {availableSeasons.map(season => (
             <option key={season} value={season}>
-              {player.league === 'EPL' ? `${season}-${season+1}` : season}
+              {player.league === 'EPL' ? `${season+1}` : season}
             </option>
           ))}
         </select>
@@ -194,7 +195,7 @@ function PlayerPage() {
         {player.team && (
           <div className="player-team">
             {player.teamLogo && <img src={player.teamLogo} alt={`${player.team} Logo`} className="team-logo" />}
-            <h2>{player.team}</h2>
+            <h2>{player.league === 'NBA' ? getFullTeamName(player.team) : player.team}</h2>
           </div>
         )}
       </div>
