@@ -22,6 +22,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getPlayerDetails, getLastUpdateTime } from '../api';
 import { useSports } from '../context/SportsContext';
 import NBAScatterChart from './NBAScatterChart';
+import SportsBarChart from './SportsBarChart';
 import './PlayerPage.css';
 
 function PlayerPage() {
@@ -51,7 +52,7 @@ function PlayerPage() {
         );
         
         // Pass selected season to API for season-specific data
-        const data = await getPlayerDetails(id, seasonToUse);
+        const data = await getPlayerDetails(id, seasonToUse); // Fetches all the player's detailed data
         setPlayer(data);
         console.log("Player data:", data); // Debug log
 
@@ -220,8 +221,15 @@ function PlayerPage() {
             <p><strong>Steals:</strong> {player.stats?.sportStats?.steals || "0"}</p>
           </div>
           
-          {/* Add the scatter plot for NBA players */}
-          <div className="player-scatter-chart">
+          {/* Add the charts for NBA players */}
+          <div className="player-charts">
+            <SportsBarChart 
+              player={player} 
+              sport="NBA"
+              season={selectedSeason}
+              compact={true} 
+            />
+
             <NBAScatterChart 
               playerId={player.nbaStatsRef || id.replace('nba_', '')} 
               compact={true} 
@@ -242,45 +250,56 @@ function PlayerPage() {
       )}
 
       {player.league === 'EPL' && (
-        <div className="epl-stats">
-          <h3>Premier League Stats</h3>
-          <p><strong>Position:</strong> {player.position || "N/A"}</p>
-        
-          {/* Common stats for all players */}
-          <p><strong>Yellow Cards:</strong> {player.yellowCards || 0}</p>
-          <p><strong>Red Cards:</strong> {player.redCards || 0}</p>
-        
-          {/* Goalkeeper stats */}
-          {player.isGoalkeeper && (
-            <>
-              <h4>Goalkeeper Stats</h4>
-              <p><strong>Goals Saved:</strong> {player.goalsSaved || 0}</p>
-              <p><strong>Goals Conceded:</strong> {player.goalsConceded || 0}</p>
-              <p><strong>Penalties Saved:</strong> {player.penaltySaved || 0}</p>
-            </>
-          )}
-        
-          {/* Outfield player stats */}
-          {!player.isGoalkeeper && (
-            <>
-              <h4>Attacking Stats</h4>
-              <p><strong>Goals:</strong> {player.goals || 0}</p>
-              <p><strong>Assists:</strong> {player.assists || 0}</p>
-              <p><strong>Penalties Scored:</strong> {player.penaltyScored || 0}</p>
-              <p><strong>Penalties Missed:</strong> {player.penaltyMissed || 0}</p>
-              
-              <h4>Passing & Possession</h4>
-              <p><strong>Key Passes:</strong> {player.keyPasses || 0}</p>
-              <p><strong>Total Passes:</strong> {player.totalPasses || 0}</p>
-              <p><strong>Successful Dribbles:</strong> {player.dribblesSuccessful || 0} of {player.dribblesAttempted || 0}</p>
-              
-              <h4>Defensive Stats</h4>
-              <p><strong>Tackles:</strong> {player.tackles || 0}</p>
-              <p><strong>Interceptions:</strong> {player.interceptions || 0}</p>
-              <p><strong>Duels Won:</strong> {player.duelsWon || 0} of {player.duelsTotal || 0}</p>
-            </>
-          )}
-        </div>
+        <>
+          <div className="epl-stats">
+            <h3>Premier League Stats</h3>
+            <p><strong>Position:</strong> {player.position || "N/A"}</p>
+          
+            {/* Common stats for all players */}
+            <p><strong>Yellow Cards:</strong> {player.yellowCards || 0}</p>
+            <p><strong>Red Cards:</strong> {player.redCards || 0}</p>
+          
+            {/* Goalkeeper stats */}
+            {player.isGoalkeeper && (
+              <>
+                <h4>Goalkeeper Stats</h4>
+                <p><strong>Goals Saved:</strong> {player.goalsSaved || 0}</p>
+                <p><strong>Goals Conceded:</strong> {player.goalsConceded || 0}</p>
+                <p><strong>Penalties Saved:</strong> {player.penaltySaved || 0}</p>
+              </>
+            )}
+          
+            {/* Outfield player stats */}
+            {!player.isGoalkeeper && (
+              <>
+                <h4>Attacking Stats</h4>
+                <p><strong>Goals:</strong> {player.goals || 0}</p>
+                <p><strong>Assists:</strong> {player.assists || 0}</p>
+                <p><strong>Penalties Scored:</strong> {player.penaltyScored || 0}</p>
+                <p><strong>Penalties Missed:</strong> {player.penaltyMissed || 0}</p>
+                
+                <h4>Passing & Possession</h4>
+                <p><strong>Key Passes:</strong> {player.keyPasses || 0}</p>
+                <p><strong>Total Passes:</strong> {player.totalPasses || 0}</p>
+                <p><strong>Successful Dribbles:</strong> {player.dribblesSuccessful || 0} of {player.dribblesAttempted || 0}</p>
+                
+                <h4>Defensive Stats</h4>
+                <p><strong>Tackles:</strong> {player.tackles || 0}</p>
+                <p><strong>Interceptions:</strong> {player.interceptions || 0}</p>
+                <p><strong>Duels Won:</strong> {player.duelsWon || 0} of {player.duelsTotal || 0}</p>
+              </>
+            )}
+          </div>
+          
+          <div className="player-charts">
+            <SportsBarChart 
+              player={player} // This contains all data including seasons
+              sport="EPL"
+              season={selectedSeason}
+              compact={true} 
+            />
+          </div>
+        </>
       )}
 
       {/* Back to Team Link */}
