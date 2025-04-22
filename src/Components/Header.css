@@ -86,10 +86,10 @@
 /* Mobile adjustments */
 @media (max-width: 600px) {
   .logo-container {
-    flex: 2; /* Make logo container wider on mobile */
+    flex: 3; /* Increase width more to cover behind search bar */
   }
   .search-container {
-    margin-left: 0; /* Remove left margin on mobile */
+    margin-left: -20px; /* Negative margin to overlap into logo container */
   }
 }
 
