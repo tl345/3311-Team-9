@@ -23,7 +23,8 @@ import premLogo from "../assets/prem-logo.png";
 import axios from "axios";
 
 function TeamPage() {
-  const { sport, teamName } = useParams();
+  const { sport, teamName: encodedTeamName } = useParams();
+  const teamName = decodeURIComponent(encodedTeamName);
   const location = useLocation(); // Detects navigation change
   const { selectedSeasons, setSeason } = useSports(); // Get selected seasons from context
 
