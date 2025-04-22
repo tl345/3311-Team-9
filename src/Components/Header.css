@@ -19,6 +19,8 @@
   padding: 15px 20px;
   background-color: #333;
   color: white;
+  width: 100%;       /* Ensures full width */
+  box-sizing: border-box; /* Includes padding in width calculation */
 
   position: sticky;        /* 👈 Make the header sticky */
   top: 0;
