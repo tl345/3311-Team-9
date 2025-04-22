@@ -83,6 +83,16 @@
   position: relative;
 }
 
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .logo-container {
+    flex: 2; /* Make logo container wider on mobile */
+  }
+  .search-container {
+    margin-left: 0; /* Remove left margin on mobile */
+  }
+}
+
 .search-container {
   flex: 1;
   display: flex;
