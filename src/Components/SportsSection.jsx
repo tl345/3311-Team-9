@@ -146,9 +146,9 @@ function SportsSection() {
   // Sports categories with their logos and dynamic player data
   const sports = [
     { 
-      name: "NFL", 
-      logo: nflLogo, 
-      players: nflTopPlayers || []
+      name: "Premier League", 
+      logo: premLogo, 
+      players: eplTopPlayers || []
     },
     { 
       name: "NBA", 
@@ -156,10 +156,10 @@ function SportsSection() {
       players: nbaTopPlayers || []
     },
     { 
-      name: "Premier League", 
-      logo: premLogo, 
-      players: eplTopPlayers || []
-    },
+      name: "NFL", 
+      logo: nflLogo, 
+      players: nflTopPlayers || []
+    }
   ];
 
   // Show loading state while data is being fetched
