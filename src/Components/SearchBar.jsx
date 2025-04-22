@@ -81,7 +81,7 @@ function SearchBar() {
                 <div
                   key={team._id}
                   className="suggestion-item"
-                  onClick={() => handleNavigate(`/team/${team.league}/${team.teamId}`)}
+                  onClick={() => handleNavigate(`/team/${team.league === "EPL" ? "Premier League" : team.league}/${encodeURIComponent(team.displayName)}`)}
                 >
                   {team.displayName}
                 </div>
