@@ -77,6 +77,17 @@
 
 .logo-container {
   flex: 1;
+  z-index: 0;
+  position: relative;
+}
+
+.search-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  margin-left: 10px; /* Add some spacing to prevent overlap */
 }
 
 .placeholder-right {
