@@ -52,7 +52,12 @@ function SearchResults() {
           <ul>
             {results.players.map((player) => (
               <li key={player._id}>
-                <Link to={`/player/${player.playerId}`}>{player.name}</Link>
+                <Link 
+                  to={`/player/${player.playerId}`}
+                  state={{ league: player.league === "Premier League" ? "EPL" : player.league }}
+                >
+                  {player.name}
+                </Link>
               </li>
             ))}
           </ul>

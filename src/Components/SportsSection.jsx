@@ -119,7 +119,7 @@ function SportsSection() {
       >
         {seasons.map(season => (
           <option key={season} value={season}>
-            {league === "EPL" ? `${season}-${season+1}` : season}
+            {league === "EPL" ? `${season+1}` : season}
           </option>
         ))}
       </select>
@@ -189,7 +189,11 @@ function SportsSection() {
               {sport.players.length > 0 ? (
                 sport.players.map((player, idx) => (
                   <li key={idx}>
-                    <Link to={`/player/${player.id}`} className="player-link">
+                    <Link 
+                      to={`/player/${player.id}`} 
+                      className="player-link"
+                      state={{ league: sport.name === "Premier League" ? "EPL" : sport.name }}
+                    >
                       {player.name}
                     </Link>
                   </li>
