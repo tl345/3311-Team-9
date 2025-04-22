@@ -636,173 +636,211 @@ router.get('/search', async (req, res) => {
 /**
  * GET /api/top-players/:league
  * Returns the top 5 players from a league sorted by performance metrics
- * 
- * This endpoint:
- * 1. Gets players from the specified league
- * 2. Sorts them by the most relevant stat for that sport
- * 3. Formats player names with team abbreviations and stats
- * 4. Returns the top 5 players
- * @param {string} req.params.league - League identifier (NBA, EPL, NFL)
- * @returns {Array} Top 5 players with formatted display names
+ * Using MongoDB aggregation for better performance
  */
 router.get('/top-players/:league', async (req, res) => {
-    try {
-      const league = req.params.league.toUpperCase();
-      const season = req.query.season ? parseInt(req.query.season, 10) : null;
+  try {
+    const league = req.params.league.toUpperCase();
+    const season = req.query.season ? parseInt(req.query.season, 10) : null;
+    let result = [];
 
-      let players = [];
-      let nbaStats = [];
-      let eplStats = [];
-      
-      // NBA top players with season parameter
-      if (league === 'NBA') {
-        // Use stats ref model to get players for specific season if provided
-        if (season) {
-          nbaStats = await NbaPlayerStats.find({
-            'regularSeasons.season': season
-          });
+    // NBA top players with optimized aggregation
+    if (league === 'NBA') {
+      if (season) {
+        // Find top NBA players for a specific season
+        const topNbaPlayers = await NbaPlayerStats.aggregate([
+          // Match players who have stats for this season
+          { $match: { 'regularSeasons.season': season } }, // Like a WHERE clause in SQL
           
-          // Map player IDs to get player records
-          const playerIds = nbaStats.map(stat => `nba_${stat.playerId}`);
-          players = await Player.find({ 
-            playerId: { $in: playerIds } 
-          });
+          // Unwind to work with individual seasons
+          { $unwind: '$regularSeasons' }, // Get separate documents for each player-season combination
           
-          // Sort them by PPG using the season stats from NbaPlayerStats
-          players.sort((a, b) => {
-            // Find the relevant player stats
-            const aStats = nbaStats.find(s => s.playerId === a.nbaStatsRef);
-            const bStats = nbaStats.find(s => s.playerId === b.nbaStatsRef);
-            
-            // Get the specific season stats
-            const aSeasonStats = aStats?.regularSeasons?.find(s => s.season === season);
-            const bSeasonStats = bStats?.regularSeasons?.find(s => s.season === season);
-            
-            // Calculate PPG
-            const aPPG = aSeasonStats?.totals?.games > 0 ? 
-              aSeasonStats.totals.points / aSeasonStats.totals.games : 0;
-            const bPPG = bSeasonStats?.totals?.games > 0 ?
-              bSeasonStats.totals.points / bSeasonStats.totals.games : 0;
-            
-            return bPPG - aPPG;
-          });
-        } else {
-          // Default behavior when no season specified
-          players = await Player.find({ 
-            league,
-            'stats.gamesPlayed': { $gt: 0 } 
-          });
+          // Filter for the specific season
+          { $match: { 'regularSeasons.season': season } },
           
-          // Sort by PPG
-          players.sort((a, b) => {
-            const aPoints = a.stats.sportStats.get('points') || 0;
-            const bPoints = b.stats.sportStats.get('points') || 0;
-            
-            const aPPG = a.stats.gamesPlayed ? aPoints / a.stats.gamesPlayed : 0;
-            const bPPG = b.stats.gamesPlayed ? bPoints / b.stats.gamesPlayed : 0;
-            
-            return bPPG - aPPG;
-          });
-        }
+          // Calculate PPG on the server side
+          { $addFields: {
+            ppg: { 
+              $cond: [
+                { $gt: ['$regularSeasons.totals.games', 0] }, // IF games > 0
+                { $divide: ['$regularSeasons.totals.points', '$regularSeasons.totals.games'] }, // THEN points / games
+                0 // ELSE 0
+              ]
+            },
+            team: '$regularSeasons.team',
+            position: '$regularSeasons.position'
+          }},
+          
+          // Sort by PPG descending
+          { $sort: { ppg: -1 } },
+          
+          // Limit to top 10 (we'll further refine after team info is added)
+          { $limit: 10 },
+          
+          // Project only needed fields
+          { $project: {
+            _id: 0,
+            playerId: 1,
+            name: 1,
+            team: 1,
+            ppg: { $round: ['$ppg', 1] }
+          }}
+        ]);
         
-        // Take top 10
-        players = players.slice(0, 10);
-      } 
-      // EPL top players with season parameter
-      else if (league === 'EPL') {
-        if (season) {
-          // Find all EPL player stats for the specified season
-          eplStats = await EPLPlayerStats.find({
-            'seasons.season': season
-          });
+        // Format results with team abbreviations
+        result = await Promise.all(topNbaPlayers.map(async (player) => {
+          const fullPlayer = await Player.findOne({ nbaStatsRef: player.playerId });
+          const teamId = fullPlayer?.teamId || '';
+          const team = await Team.findOne({ teamId });
+          const teamAbbr = getTeamAbbreviation(team?.displayName || player.team);
           
-          // Extract player IDs
-          const playerIds = eplStats.map(stat => `epl_${stat.playerId}`);
-          
-          // Find all players with these IDs
-          const allPlayers = await Player.find({
-            playerId: { $in: playerIds }
-          });
-
-          // Find all corresponding players
-          //players = await Player.find({ playerId: { $in: playerIds } });
-          
-          // Sort by goals for this specific season
-          players = allPlayers.sort((a, b) => {
-            // Find the corresponding stats documents
-            const aStats = eplStats.find(s => s.playerId === a.playerId.replace('epl_', ''));
-            const bStats = eplStats.find(s => s.playerId === b.playerId.replace('epl_', ''));
-            
-            // Find the specific season
-            const aSeasonStats = aStats?.seasons.find(s => s.season === season);
-            const bSeasonStats = bStats?.seasons.find(s => s.season === season);
-            
-            // Compare goals
-            const aGoals = aSeasonStats?.goals?.total || 0;
-            const bGoals = bSeasonStats?.goals?.total || 0;
-            
-            return bGoals - aGoals;  // Sort descending
-          });
-        } else {
-          // Default behavior - sort by goals in sportStats
-          players = await Player.find({ league })
-            .sort({ 'stats.sportStats.goals': -1 })
-            .limit(10);
-        }
+          return {
+            id: `nba_${player.playerId}`,
+            name: `${player.name} (${teamAbbr}) - ${player.ppg} ppg`
+          };
+        }));
       } else {
-        // NFL - no season handling yet
-        players = await Player.find({ league }).limit(10);
-      }
-      
-      // Format player data with team abbreviations and performance stats
-      const result = await Promise.all(players.map(async (player) => {
-        // Convert player to object and handle Map for JSON serialization
-        const playerObj = player.toObject();
-        if (playerObj.stats && playerObj.stats.sportStats) {
-          playerObj.stats.sportStats = Object.fromEntries(player.stats.sportStats);
-        }
-        
-        // Get the team name and convert to abbreviation
-        const team = await Team.findOne({ teamId: player.teamId });
-        const teamName = team ? team.displayName : 'Unknown Team';
-        
-        const teamAbbr = getTeamAbbreviation(teamName);
+        // For current season, use the Player model with sportStats
+        const topNbaPlayers = await Player.aggregate([
+          // Match NBA players with games played
+          { $match: { 
+            league: 'NBA', 
+            'stats.gamesPlayed': { $gt: 0 } 
+          }},
           
-          // Format player display name with team and stats
+          // Add calculated PPG field
+          { $addFields: {
+            ppg: { 
+              $cond: [
+                { $gt: ['$stats.gamesPlayed', 0] },
+                { $divide: [
+                  { $ifNull: [{ $toDouble: { $getField: { field: 'points', input: '$stats.sportStats' }}}, 0] },
+                  '$stats.gamesPlayed'
+                ]},
+                0
+              ]
+            }
+          }},
+          
+          // Sort by PPG descending
+          { $sort: { ppg: -1 } },
+          
+          // Limit to top 10
+          { $limit: 10 },
+          
+          // Project only needed fields
+          { $project: {
+            _id: 0,
+            playerId: 1,
+            name: 1,
+            teamId: 1,
+            ppg: 1
+          }}
+        ]);
+        
+        // Format results with team abbreviations
+        result = await Promise.all(topNbaPlayers.map(async (player) => {
+          const team = await Team.findOne({ teamId: player.teamId });
+          const teamAbbr = getTeamAbbreviation(team?.displayName || 'Unknown');
+          
           return {
             id: player.playerId,
-            name: `${player.name} (${teamAbbr}) - ${
-              league === 'NBA' 
-                ? (league === 'NBA' && season && player.nbaStatsRef) 
-                  ? (() => {
-                      // Find the relevant player stats for this specific season
-                      const stats = nbaStats.find(s => s.playerId === player.nbaStatsRef);
-                      const seasonStats = stats?.regularSeasons?.find(s => s.season === season);
-                      return seasonStats?.totals?.games > 0 
-                        ? (seasonStats.totals.points / seasonStats.totals.games).toFixed(1) + ' ppg'
-                        : '0.0 ppg';
-                    })() 
-                  : (player.stats?.sportStats?.get('points') / player.stats?.gamesPlayed).toFixed(1) + ' ppg'
-                : league === 'EPL' 
-                  ? (league === 'EPL' && season) 
-                    ? (() => {
-                        // Find EPL stats for this season
-                        const stats = eplStats?.find(s => s.playerId === player.playerId.replace('epl_', ''));
-                        const seasonStats = stats?.seasons.find(s => s.season === season);
-                        return (seasonStats?.goals?.total || 0) + ' goals';
-                      })()
-                    : (player.stats?.sportStats?.get('goals') || 0) + ' goals'
-                  : ''
-            }`
+            name: `${player.name} (${teamAbbr}) - ${player.ppg.toFixed(1)} ppg`
           };
+        }));
+      }
+    } 
+    // EPL top players with optimized aggregation
+    else if (league === 'EPL') {
+      if (season) {
+        // Find top EPL players for a specific season
+        const topEplPlayerStats = await EPLPlayerStats.aggregate([
+          // Match players who have stats for this season
+          { $match: { 'seasons.season': season } },
+          
+          // Unwind to work with individual seasons
+          { $unwind: '$seasons' },
+          
+          // Filter for the specific season
+          { $match: { 'seasons.season': season } },
+          
+          // Sort by goals descending
+          { $sort: { 'seasons.goals.total': -1 } },
+          
+          // Limit to top 10
+          { $limit: 10 },
+          
+          // Project only needed fields
+          { $project: {
+            _id: 0,
+            playerId: 1,
+            name: 1,
+            teamId: { $concat: ['epl_', { $toString: '$seasons.teamId' }] },
+            team: '$seasons.team',
+            goals: { $ifNull: ['$seasons.goals.total', 0] }
+          }}
+        ]);
+        
+        // Format results with team info
+        result = await Promise.all(topEplPlayerStats.map(async (player) => {
+          const fullPlayer = await Player.findOne({ playerId: `epl_${player.playerId}` });
+          const team = await Team.findOne({ teamId: fullPlayer?.teamId || player.teamId });
+          const teamAbbr = team?.name?.split(' ')[0] || player.team?.split(' ')[0] || 'Unknown';
+          
+          return {
+            id: `epl_${player.playerId}`,
+            name: `${player.name} (${teamAbbr}) - ${player.goals} goals`
+          };
+        }));
+      } else {
+        // For current season, use the Player model with sportStats
+        const topEplPlayers = await Player.aggregate([
+          // Match EPL players
+          { $match: { league: 'EPL' } },
+          
+          // Sort by goals descending
+          { $sort: { 'stats.sportStats.goals': -1 } },
+          
+          // Limit to top 10
+          { $limit: 10 },
+          
+          // Project only needed fields
+          { $project: {
+            _id: 0,
+            playerId: 1,
+            name: 1,
+            teamId: 1,
+            goals: { $ifNull: [{ $getField: { field: 'goals', input: '$stats.sportStats' }}, 0] }
+          }}
+        ]);
+        
+        // Format results with team info
+        result = await Promise.all(topEplPlayers.map(async (player) => {
+          const team = await Team.findOne({ teamId: player.teamId });
+          const teamAbbr = team?.name?.split(' ')[0] || 'Unknown';
+          
+          return {
+            id: player.playerId,
+            name: `${player.name} (${teamAbbr}) - ${player.goals} goals`
+          };
+        }));
+      }
+    } 
+    // NFL (simplified since it's using mock data)
+    else if (league === 'NFL') {
+      const topNflPlayers = await Player.find({ league: 'NFL' }).limit(5);
+      result = topNflPlayers.map(player => ({
+        id: player.playerId || `nfl_${Math.floor(Math.random() * 1000)}`,
+        name: player.name
       }));
-      
-      // Return top 5
-      res.json(result.slice(0, 5));
-    } catch (error) {
-      console.error('Error fetching top players:', error);
-      res.status(500).json({ message: error.message });
     }
+
+    // Return top 5 players
+    res.json(result.slice(0, 5));
+  } catch (error) {
+    console.error('Error fetching top players:', error);
+    res.status(500).json({ message: error.message });
+  }
 });
 
 /**
