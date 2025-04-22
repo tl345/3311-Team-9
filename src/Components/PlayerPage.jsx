@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { getPlayerDetails, getLastUpdateTime } from '../api';
 import { useSports } from '../context/SportsContext';
 import NBAScatterChart from './NBAScatterChart';
@@ -27,8 +27,24 @@ import './PlayerPage.css';
 
 function PlayerPage() {
   const { id } = useParams();
+  const location = useLocation();
   // Get selected seasons and season setter from global context
   const { selectedSeasons, setSeason } = useSports();
+  
+  // Set initial background based on navigation state
+  useEffect(() => {
+    const league = location.state?.league;
+    if (league === "EPL") {
+      document.body.classList.remove("nba-page", "nfl-page");
+      document.body.classList.add("premier-page");
+    } else if (league === "NBA") {
+      document.body.classList.remove("premier-page", "nfl-page");
+      document.body.classList.add("nba-page");
+    } else if (league === "NFL") {
+      document.body.classList.remove("premier-page", "nba-page");
+      document.body.classList.add("nfl-page");
+    }
+  }, [location.state]);
   const [player, setPlayer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [availableSeasons, setAvailableSeasons] = useState([]);
@@ -51,21 +67,9 @@ function PlayerPage() {
           null
         );
 
-        // Remove any previous league classes
-        document.body.classList.remove("premier-page", "nba-page", "nfl-page");
-        
         // Pass selected season to API for season-specific data
         const data = await getPlayerDetails(id, seasonToUse); // Fetches all the player's detailed data
         setPlayer(data);
-        
-        // Set background based on player's league
-        if (data?.league === 'EPL') {
-          document.body.classList.add("premier-page");
-        } else if (data?.league === 'NBA') {
-          document.body.classList.add("nba-page");
-        } else if (data?.league === 'NFL') {
-          document.body.classList.add("nfl-page");
-        }
 
         // Extract available seasons from the response
         if (data) {

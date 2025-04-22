@@ -222,7 +222,12 @@ function TeamPage() {
         
         <div className="player-list">
         {players.map(player => (
-          <Link to={`/player/${player.id}`} key={player.id} className="player-card">
+          <Link 
+            to={`/player/${player.id}`} 
+            key={player.id} 
+            className="player-card"
+            state={{ league: sport === "Premier League" ? "EPL" : sport }}
+          >
             {sport === "NBA" && (
               <div>
                 <p>
