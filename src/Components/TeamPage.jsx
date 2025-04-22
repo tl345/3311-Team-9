@@ -38,9 +38,20 @@ function TeamPage() {
     const fetchPlayers = async () => {
       setLoading(true);
       try {
+        // Remove any previous league classes
+        document.body.classList.remove("premier-page", "nba-page", "nfl-page");
+        
+        // Set background based on sport
+        if (sport === "Premier League") {
+          document.body.classList.add("premier-page");
+        } else if (sport === "NBA") {
+          document.body.classList.add("nba-page");
+        } else if (sport === "NFL") {
+          document.body.classList.add("nfl-page");
+        }
+
         let fetchedPlayers = [];
         let fetchedTeams = [];
-
         let season = null;
         if (sport === "NBA") {
           try {

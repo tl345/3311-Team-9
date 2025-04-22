@@ -50,11 +50,22 @@ function PlayerPage() {
           player?.league === 'EPL' ? selectedSeasons.EPL : 
           null
         );
+
+        // Remove any previous league classes
+        document.body.classList.remove("premier-page", "nba-page", "nfl-page");
         
         // Pass selected season to API for season-specific data
         const data = await getPlayerDetails(id, seasonToUse); // Fetches all the player's detailed data
         setPlayer(data);
-        console.log("Player data:", data); // Debug log
+        
+        // Set background based on player's league
+        if (data?.league === 'EPL') {
+          document.body.classList.add("premier-page");
+        } else if (data?.league === 'NBA') {
+          document.body.classList.add("nba-page");
+        } else if (data?.league === 'NFL') {
+          document.body.classList.add("nfl-page");
+        }
 
         // Extract available seasons from the response
         if (data) {
