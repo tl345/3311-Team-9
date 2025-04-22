@@ -9,7 +9,8 @@
  * The component fetches data from sport-specific API endpoints and
  * provides navigation links to individual team pages.
  * 
- * Updated to integrate with SportsContext, providing consistent season selection across app.
+ * Attemped to update to integrate with SportsContext, providing consistent season selection across app.
+ * However, did not have the correct data in the database to implement and test this.
  * 
  * Note: Background swapping is now handled centrally in App.jsx by adding/removing
  *       body classes (premier-page, nba-page, nfl-page). No wrapper div needed here.
@@ -40,7 +41,7 @@ function StandingsPage() {
         const apiLeague = league === "Premier League" ? "EPL" : league;
         const baseUrl =
           window.location.hostname === "localhost"
-            ? "http://localhost:5001/api"
+            ? "http://localhost:5000/api"
             : "/api";
 
         const response = await axios.get(
@@ -81,21 +82,22 @@ function StandingsPage() {
   useEffect(() => {
     const fetchTeams = async () => {
       // Wait for selectedSeason on NBA/PL
-      if (
-        (league === "NBA" || league === "Premier League") &&
-        !selectedSeason
-      ) {
-        return;
-      }
+      // if (
+      //   (league === "NBA" || league === "Premier League") &&
+      //   !selectedSeason
+      // ) {
+      //   return;
+      // }
 
       setLoading(true);
       try {
         if (league === "NBA") {
-          setTeams(await getNbaTeams(selectedSeason));
+          // Removed selectedSeason parameter for nba and epl
+          setTeams(await getNbaTeams());
         } else if (league === "NFL") {
           setTeams(await getNflTeams());
         } else if (league === "Premier League") {
-          setTeams(await getEplTeams(selectedSeason));
+          setTeams(await getEplTeams());
         }
       } catch (error) {
         console.error("Error fetching teams:", error);
@@ -104,48 +106,50 @@ function StandingsPage() {
     };
 
     fetchTeams();
-  }, [league, selectedSeason]);
+  }, [league]); // Removed selectedSeason dependency
 
-  // Handle season dropdown changes
-  const handleSeasonChange = (e) => {
-    const newSeason = parseInt(e.target.value, 10);
-    setSelectedSeason(newSeason);
-    if (league === "NBA") {
-      setSeason("NBA", newSeason);
-    } else if (league === "Premier League") {
-      setSeason("EPL", newSeason);
-    }
-  };
+  // // Handle season dropdown changes
+  // const handleSeasonChange = (e) => {
+  //   const newSeason = parseInt(e.target.value, 10);
+  //   setSelectedSeason(newSeason);
+  //   if (league === "NBA") {
+  //     setSeason("NBA", newSeason);
+  //   } else if (league === "Premier League") {
+  //     setSeason("EPL", newSeason);
+  //   }
+  // };
 
-  // Render season selector for NBA & PL
-  const renderSeasonSelector = () => {
-    if (league === "NFL" || availableSeasons.length <= 1) return null;
-    return (
-      <div className="season-selector">
-        <label htmlFor="season-select">Season: </label>
-        <select
-          id="season-select"
-          value={selectedSeason || ""}
-          onChange={handleSeasonChange}
-        >
-          {availableSeasons.map((season) => (
-            <option key={season} value={season}>
-              {league === "Premier League"
-                ? `${season}-${season + 1}`
-                : season}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  };
+  // // Render season selector for NBA & PL
+  // const renderSeasonSelector = () => {
+  //   if (league === "NFL" || availableSeasons.length <= 1) return null;
+  //   return (
+  //     <div className="season-selector">
+  //       <label htmlFor="season-select">Season: </label>
+  //       <select
+  //         id="season-select"
+  //         value={selectedSeason || ""}
+  //         onChange={handleSeasonChange}
+  //       >
+  //         {availableSeasons.map((season) => (
+  //           <option key={season} value={season}>
+  //             {league === "Premier League"
+  //               ? `${season}-${season + 1}`
+  //               : season}
+  //           </option>
+  //         ))}
+  //       </select>
+  //     </div>
+  //   );
+  // };
 
   if (loading) return <p>Loading teams...</p>;
 
   return (
     <div className="standings-box">
       <h1 className="standings-title">{league} Standings</h1>
-      {renderSeasonSelector()}
+      {/* Season selector removed - database doesn't have sufficient season data
+        {renderSeasonSelector()} 
+      */}
       <ul className="standings-list">
         {teams.map((team, index) => (
           <li key={team.name}>
