@@ -154,7 +154,7 @@ function TeamPage() {
         >
           {availableSeasons.map(season => (
             <option key={season} value={season}>
-              {sport === "Premier League" ? `${season}-${season+1}` : season}
+              {sport === "Premier League" ? `${season+1}` : season}
             </option>
           ))}
         </select>
