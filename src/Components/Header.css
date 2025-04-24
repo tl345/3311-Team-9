@@ -58,12 +58,12 @@
   background-color: #3e8e41;
 }
 .search-bar {
-  width: 300px; /* Increase width */
-  height: 40px; /* Increase height */
-  font-size: 1.2rem; /* Make text bigger */
-  padding: 8px 12px; /* Add padding for better spacing */
-  border: 2px solid #ccc; /* Add border for visibility */
-  border-radius: 6px; /* Smooth rounded edges */
+  width: 300px; /* Default width for desktop */
+  height: 40px;
+  font-size: 1.2rem;
+  padding: 8px 12px;
+  border: 2px solid #ccc;
+  border-radius: 6px;
   transition: all 0.3s ease-in-out;
 }
 
@@ -77,6 +77,8 @@
   flex: 1;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .logo-container {
@@ -88,20 +90,18 @@
 /* Mobile adjustments */
 @media (max-width: 600px) {
   .logo-container {
-    flex: 3; /* Increase width more to cover behind search bar */
+    flex: 2; /* Reduce flex to give more space to search container */
   }
   .search-container {
-    margin-left: -20px; /* Negative margin to overlap into logo container */
+    margin-left: -30px; /* Increase overlap */
+    width: 160px; /* Constrain container width */
   }
-}
-
-.search-container {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  position: relative;
-  z-index: 1;
-  margin-left: 10px; /* Add some spacing to prevent overlap */
+  .search-bar {
+    width: 160px; /* Make search bar even smaller on mobile */
+    font-size: 0.9rem; /* Reduce font size further */
+    height: 35px; /* Slightly reduce height */
+    padding: 6px 10px; /* Reduce padding */
+  }
 }
 
 .placeholder-right {
