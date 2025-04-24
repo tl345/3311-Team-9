@@ -76,31 +76,37 @@
 .search-container {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end; /* Move search to the right */
   position: relative;
-  z-index: 1;
+  z-index: 0; /* Put search behind logo */
 }
 
 .logo-container {
   flex: 1;
-  z-index: 0;
+  z-index: 1; /* Put logo on top */
   position: relative;
 }
 
 /* Mobile adjustments */
 @media (max-width: 600px) {
   .logo-container {
-    flex: 2; /* Reduce flex to give more space to search container */
+    flex: 4; /* Further increase logo container space */
+    min-width: 120px; /* Ensure minimum width for logo */
   }
   .search-container {
-    margin-left: -30px; /* Increase overlap */
-    width: 160px; /* Constrain container width */
+    margin-left: -10px; /* Reduce overlap more */
+    width: 120px; /* Make container even smaller */
   }
   .search-bar {
-    width: 160px; /* Make search bar even smaller on mobile */
-    font-size: 0.9rem; /* Reduce font size further */
-    height: 35px; /* Slightly reduce height */
-    padding: 6px 10px; /* Reduce padding */
+    width: 120px; /* Make search bar even smaller */
+    font-size: 0.9rem;
+    height: 30px; /* Reduce height more */
+    padding: 4px 6px; /* Reduce padding more */
+  }
+  .StatZone {
+    font-size: 1.8rem; /* Slightly reduce font size on mobile */
+    padding: 6px 12px; /* Reduce padding */
+    white-space: nowrap; /* Prevent text wrapping */
   }
 }
 
