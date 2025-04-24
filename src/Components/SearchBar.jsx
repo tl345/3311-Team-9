@@ -7,7 +7,17 @@ function SearchBar() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState({ players: [], teams: [] });
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 600);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -50,7 +60,7 @@ function SearchBar() {
     <div className="search-bar-wrapper">
       <input
         type="text"
-        placeholder="Search for a player or team..."
+        placeholder={isMobile ? "Search..." : "Search for a player or team..."}
         className="search-bar"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
