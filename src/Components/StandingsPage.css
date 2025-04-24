@@ -1,7 +1,7 @@
 .standings-box {
   text-align: center;
   width: 90%;
-  max-width: 600px;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -80,4 +80,72 @@
   margin-top: 20px;
   display: inline-block;
   color: #666;
+}
+
+/* Table Styles */
+.standings-table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+}
+
+@media (min-width: 768px) {
+  .standings-table {
+    font-size: 1rem;
+  }
+}
+
+.standings-table th,
+.standings-table td {
+  padding: 12px 8px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.standings-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.standings-table .team-column {
+  text-align: left;
+  min-width: 200px;
+}
+
+.standings-table .position {
+  font-weight: 600;
+  color: #333;
+}
+
+.standings-table .points {
+  font-weight: 600;
+  color: #1a0dab;
+}
+
+.standings-table .team-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+.standings-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.standings-table a {
+  text-decoration: none;
+  color: #1a0dab;
+  font-weight: 500;
+}
+
+.standings-table a:hover {
+  text-decoration: underline;
 }

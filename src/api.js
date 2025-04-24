@@ -215,6 +215,13 @@ export const getEplTeams = async (season = null) => {
         id: team.teamId,
         name: team.displayName,
         logo: team.logo,
+        standings: {
+          gamesPlayed: team.standings?.gamesPlayed || 0,
+          wins: team.standings?.wins || 0,
+          draws: team.standings?.draws || 0,
+          losses: team.standings?.losses || 0,
+          points: team.standings?.points || 0
+        }
       }));
     } catch (error) {
       console.error('EPL Teams Error:', error);

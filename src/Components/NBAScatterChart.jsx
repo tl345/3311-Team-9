@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, 
-  CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ReferenceLine
+  CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
 } from 'recharts';
 import { getEfficiencyUsageData } from '../api';
 import './NBAScatterChart.css';
@@ -32,6 +32,15 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedPlayer, setSelectedPlayer] = useState(null);
+
+    // Add state for position visibility
+    const [visiblePositions, setVisiblePositions] = useState({
+      'PG': true,
+      'SG': true,
+      'SF': true,
+      'PF': true,
+      'C': true
+    });
     
     // Position-based color scheme
     const positionColors = {
@@ -41,6 +50,39 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
       'PF': '#d62728', // Red
       'C': '#9467bd',  // Purple
       'default': '#17becf' // Light blue
+    };
+
+    // Toggle position visibility
+    const togglePosition = (position) => {
+      setVisiblePositions(prev => ({
+        ...prev,
+        [position]: !prev[position]
+      }));
+    };
+    
+    // Filter data based on visible positions, but always include the selected player
+    const getFilteredData = () => {
+      // First filter the data by visible positions
+      const filtered = data.filter(player => 
+        visiblePositions[player.position] || 
+        player.playerId === playerId
+      );
+      
+      // Then sort to ensure highlighted player comes last (will be rendered on top)
+      return filtered.sort((a, b) => {
+        // If a is the highlighted player, it should come after b
+        if (a.playerId === playerId || 
+          (selectedPlayer && a.playerId === selectedPlayer.playerId)) {
+          return 1;
+        }
+        // If b is the highlighted player, it should come after a
+        if (b.playerId === playerId || 
+          (selectedPlayer && b.playerId === selectedPlayer.playerId)) {
+          return -1;
+        }
+        // Otherwise, keep original order
+        return 0;
+      });
     };
   
     useEffect(() => {
@@ -95,16 +137,46 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
       
       return null;
     };
+
+    // Render position filter toggles
+    const renderPositionFilters = () => {
+      return (
+        <div className="position-filters">
+          {Object.keys(positionColors)
+            .filter(pos => pos !== 'default')
+            .map(position => (
+              <div key={position} className="position-filter">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={visiblePositions[position]} 
+                    onChange={() => togglePosition(position)}
+                  />
+                  <span className="position-color" style={{backgroundColor: positionColors[position]}}></span>
+                  {position}
+                </label>
+              </div>
+            ))
+          }
+        </div>
+      );
+    };
   
     if (isLoading) return <div className="loading-container">Loading chart data...</div>;
     if (error) return <div className="error-container">{error}</div>;
     if (!data.length) return <div className="no-data-container">No data available for the selected parameters.</div>;
   
+    // Get filtered data for display
+    const filteredData = getFilteredData();
+
     return (
       <div className={`scatter-chart-container ${compact ? 'compact-chart' : ''}`}>
         <h2>NBA Player Efficiency vs Usage ({type === 'regular' ? 'Regular Season' : 'Playoffs'} {season})</h2>
         <p className="chart-subtitle">Minimum {minGames} games played · Bubble size represents Player Efficiency Rating (PER)</p>
         
+        {/* Position filters */}
+        {renderPositionFilters()}
+
         <div className="chart-area">
           <ResponsiveContainer width="100%" height={400}>
             <ScatterChart
@@ -115,7 +187,8 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
                 type="number" 
                 dataKey="usagePercent" 
                 name="Usage Rate" 
-                domain={[10, 40]}
+                domain={[5, 40]}
+                allowDataOverflow={true}
                 label={{ value: 'Usage Rate (%)', position: 'bottom', offset: 20 }}
                 tick={{ fontSize: 12 }}
               />
@@ -123,7 +196,8 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
                 type="number" 
                 dataKey="tsPercent" 
                 name="True Shooting %" 
-                domain={[0.4, 0.7]}
+                domain={[0.4, 0.85]}
+                allowDataOverflow={true}
                 tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
                 label={{ 
                   value: 'True Shooting %', 
@@ -140,27 +214,15 @@ const NBAScatterChart = ({ season = 2025, type = 'regular', minGames = 20, playe
                 name="PER" 
               />
               <Tooltip content={renderTooltip} />
-              <Legend 
-                align="center"
-                verticalAlign="top"
-                payload={
-                  Object.keys(positionColors)
-                    .filter(pos => pos !== 'default')
-                    .map(position => ({
-                      value: position,
-                      type: 'circle',
-                      color: positionColors[position],
-                      id: position
-                    }))
-                }
-              />
+              
               <Scatter 
                 name="Players" 
-                data={data} 
+                data={filteredData} 
                 fill="#8884d8" 
                 onClick={handleClick}
+                isAnimationActive={false}
               >
-                {data.map((entry, index) => {
+                {filteredData.map((entry, index) => {
                   const color = positionColors[entry.position] || positionColors.default;
                   // Highlight the selected player or the player that matches the provided ID
                   const isHighlighted = 

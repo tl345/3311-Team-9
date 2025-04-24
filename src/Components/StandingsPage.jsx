@@ -150,23 +150,64 @@ function StandingsPage() {
       {/* Season selector removed - database doesn't have sufficient season data
         {renderSeasonSelector()} 
       */}
-      <ul className="standings-list">
-        {teams.map((team, index) => (
-          <li key={team.name}>
-            {league === "Premier League" && <strong>{index + 1}. </strong>}
-            {team.logo && (
-              <img
-                src={team.logo}
-                alt={team.name}
-                style={{ width: 30, height: 30, marginRight: 10 }}
-              />
-            )}
-            <Link to={`/team/${league}/${encodeURIComponent(team.name)}`}>
-              {team.name}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {league === "Premier League" ? (
+        <div className="standings-table-container">
+          <table className="standings-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th className="team-column">Team</th>
+                <th>MP</th>
+                <th>W</th>
+                <th>D</th>
+                <th>L</th>
+                <th>Pts</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teams.map((team, index) => (
+                <tr key={team.name}>
+                  <td className="position">{index + 1}</td>
+                  <td className="team-column">
+                    {team.logo && (
+                      <img
+                        src={team.logo}
+                        alt={team.name}
+                        className="team-logo"
+                      />
+                    )}
+                    <Link to={`/team/${league}/${encodeURIComponent(team.name)}`}>
+                      {team.name}
+                    </Link>
+                  </td>
+                  <td>{team.standings?.gamesPlayed || 0}</td>
+                  <td>{team.standings?.wins || 0}</td>
+                  <td>{team.standings?.draws || 0}</td>
+                  <td>{team.standings?.losses || 0}</td>
+                  <td className="points">{team.standings?.points || 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <ul className="standings-list">
+          {teams.map((team, index) => (
+            <li key={team.name}>
+              {team.logo && (
+                <img
+                  src={team.logo}
+                  alt={team.name}
+                  style={{ width: 30, height: 30, marginRight: 10 }}
+                />
+              )}
+              <Link to={`/team/${league}/${encodeURIComponent(team.name)}`}>
+                {team.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
       <Link to="/">← Back to Home</Link>
     </div>
   );
