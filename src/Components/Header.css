@@ -34,6 +34,8 @@
   font-weight: bold; /* Make the font bold for emphasis */
   padding: 10px 20px; /* Add more space around the text */
   letter-spacing: 1px; /* Add a little space between letters */
+  width: 100%; /* Make the box full width */
+  box-sizing: border-box;
 }
 
 .header-right {

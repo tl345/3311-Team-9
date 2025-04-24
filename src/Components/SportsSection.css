@@ -68,6 +68,8 @@
   box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
 }
 
+/* Removed last-update-info styles to remove white box */
+/*
 .last-update-info {
   font-size: 1.1rem;
   font-weight: bold;
@@ -78,19 +80,24 @@
   border-radius: 5px;
   border: 1px solid #e0e0e0;
 }
+*/
 
 /* Media Queries for Mobile Responsiveness */
 @media (max-width: 768px) {
   .sports-section {
     flex-direction: column; /* Stack categories vertically */
-    align-items: center; /* Center align */
+    align-items: stretch; /* Stretch to full width */
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .sport-category {
     min-width: 100%; /* Full width on mobile */
-    max-width: none; /* Remove max width */
+    max-width: 100%; /* Limit max width */
     margin-bottom: 20px; /* Space between categories */
     padding: 20px; /* Adjust padding */
+    box-sizing: border-box;
   }
 
   .sport-header h2 {

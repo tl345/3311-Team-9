@@ -171,11 +171,7 @@ function SportsSection() {
   return (
     <div className="homepage-container">
       {/* Last Update Banner */}
-      {lastUpdateTime && (
-        <div className="last-update-info">
-          <span className="update-label">Data last updated:</span> {lastUpdateTime.formattedTimestamp}
-        </div>
-      )}
+      {/* Removed last update info block to remove the sentence and white box */}
 
       <div className="sports-section">
         {sports.map((sport, index) => (
